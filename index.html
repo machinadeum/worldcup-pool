@@ -149,14 +149,19 @@
         <div class="card-title">New participant</div>
         <div class="gap"><div class="label">Display name</div><input type="text" id="reg-name" placeholder="e.g. Mathew"></div>
         <div class="gap"><div class="label">Email (private)</div><input type="email" id="reg-email" placeholder="you@email.com"></div>
-        <div class="gap"><div class="label">Password</div><input type="password" id="reg-pw" placeholder="Choose a password"></div>
         <button class="btn" style="width:100%;margin-top:4px" onclick="register()">Register</button>
         <div class="error-msg" id="reg-error"></div>
+        <!-- Password reveal shown after registration -->
+        <div id="reg-success" style="display:none;margin-top:16px;background:var(--surface2);border:1px solid var(--green);border-radius:var(--radius);padding:16px;">
+          <div style="color:var(--green);font-weight:600;font-size:13px;margin-bottom:8px">✓ Registered! Write down your password:</div>
+          <div id="reg-pw-display" style="font-family:var(--font-m);font-size:22px;font-weight:500;color:var(--gold);letter-spacing:2px;text-align:center;padding:12px 0;"></div>
+          <div style="font-size:11px;color:var(--text2);margin-top:8px;text-align:center">You'll need this to sign in. If you lose it, the pool admin can look it up for you.</div>
+        </div>
       </div>
       <div class="card">
         <div class="card-title">Already registered</div>
         <div class="gap"><div class="label">Display name</div><input type="text" id="login-name" placeholder="Your display name"></div>
-        <div class="gap"><div class="label">Password</div><input type="password" id="login-pw" placeholder="Your password" onkeydown="if(event.key==='Enter')login()"></div>
+        <div class="gap"><div class="label">Your generated password</div><input type="text" id="login-pw" placeholder="e.g. Soft742Road" onkeydown="if(event.key==='Enter')login()" autocomplete="off" spellcheck="false"></div>
         <button class="btn btn-ghost" style="width:100%;margin-top:20px" onclick="login()">Sign in</button>
         <div class="error-msg" id="login-error"></div>
       </div>
@@ -280,7 +285,7 @@ const TEAMS = {
   "Argentina":{flag:"🇦🇷",code:"ARG"},"Algeria":{flag:"🇩🇿",code:"ALG"},
   "Austria":{flag:"🇦🇹",code:"AUT"},"Jordan":{flag:"🇯🇴",code:"JOR"},
   "Portugal":{flag:"🇵🇹",code:"POR"},"DR Congo":{flag:"🇨🇩",code:"COD"},
-  "Uzbekistan":{flag:"🇺🇿",code:"UZB"},"Colombia":{flag:"🇨🇴",code:"COL"},
+  "Uzbekistan":{flag:"���🇿",code:"UZB"},"Colombia":{flag:"🇨🇴",code:"COL"},
   "England":{flag:"🇬🇧",code:"ENG"},"Croatia":{flag:"🇭🇷",code:"CRO"},
   "Ghana":{flag:"🇬🇭",code:"GHA"},"Panama":{flag:"🇵🇦",code:"PAN"},
 };
@@ -445,30 +450,42 @@ window.switchAdminTab=function(tab,btn){
 };
 
 // ── Auth ──────────────────────────────────────────────────────
+const PW_LIST1=["Soft","Weak","Strong","Wise","Kind","Rare","Rich","Poor","Deep","Flat","Thin","Wide","Tiny","Tall","Wild","Safe","Fair","Cute","Neat","Mean"];
+const PW_LIST2=["Road","Door","City","Town","Bank","Shop","Site","Fish","Film","Park","Ball","Race","Gold","Wood","Wind","Farm","Rock","Tree","Star","Hope"];
+function generatePassword(){
+  const w1=PW_LIST1[Math.floor(Math.random()*PW_LIST1.length)];
+  const num=String(Math.floor(Math.random()*900)+100); // 100–999
+  const w2=PW_LIST2[Math.floor(Math.random()*PW_LIST2.length)];
+  return w1+num+w2;
+}
+
 window.register=async function(){
   const name=document.getElementById("reg-name").value.trim();
   const email=document.getElementById("reg-email").value.trim();
-  const pw=document.getElementById("reg-pw").value;
   const errEl=document.getElementById("reg-error"); errEl.textContent="";
-  if(!name||!email||!pw){errEl.textContent="Please fill in all fields.";return;}
+  document.getElementById("reg-success").style.display="none";
+  if(!name||!email){errEl.textContent="Please fill in both fields.";return;}
   if(!email.includes("@")){errEl.textContent="Enter a valid email.";return;}
-  if(pw.length<4){errEl.textContent="Password must be at least 4 characters.";return;}
-  if(allPlayers.find(p=>p.name.toLowerCase()===name.toLowerCase())){errEl.textContent="That name is taken.";return;}
+  if(allPlayers.find(p=>p.name.toLowerCase()===name.toLowerCase())){errEl.textContent="That name is taken — try a different display name.";return;}
+  const pw=generatePassword();
   const id=name.toLowerCase().replace(/\s+/g,"_")+"_"+Date.now();
   const player={name,email,password:pw,groupPicks:{},koPicks:{},createdAt:new Date().toISOString()};
   await setDoc(doc(db,"players",id),player);
   currentPlayer={id,...player}; localStorage.setItem("wc_player",JSON.stringify(currentPlayer));
-  updateHeaderPlayer(); document.getElementById("reg-name").value="";
-  document.getElementById("reg-email").value=""; document.getElementById("reg-pw").value="";
+  updateHeaderPlayer();
+  document.getElementById("reg-name").value="";
+  document.getElementById("reg-email").value="";
+  document.getElementById("reg-pw-display").textContent=pw;
+  document.getElementById("reg-success").style.display="block";
 };
 
 window.login=async function(){
   const name=document.getElementById("login-name").value.trim();
-  const pw=document.getElementById("login-pw").value;
+  const pw=document.getElementById("login-pw").value.trim();
   const errEl=document.getElementById("login-error"); errEl.textContent="";
   const found=allPlayers.find(p=>p.name.toLowerCase()===name.toLowerCase());
   if(!found){errEl.textContent="No player found with that name.";return;}
-  if(found.password!==pw){errEl.textContent="Incorrect password.";return;}
+  if(found.password.toLowerCase()!==pw.toLowerCase()){errEl.textContent="Incorrect password. Ask the admin if you've forgotten it.";return;}
   currentPlayer=found; localStorage.setItem("wc_player",JSON.stringify(currentPlayer));
   updateHeaderPlayer(); document.getElementById("login-name").value=""; document.getElementById("login-pw").value="";
 };
@@ -514,7 +531,7 @@ function renderRegisterPage(){
     </div>`).join("");
 }
 
-// ── Picks ───────────────────────────────���─────────────────────
+// ── Picks ─────────────────────────────────────────────────────
 function renderPicks(){
   if(!currentPlayer){
     document.getElementById("picks-not-signed-in").style.display="block";
@@ -546,27 +563,34 @@ function renderGroupPicks(){
     return `<div class="group-header">Group ${grp}</div>${games.map(g=>{
       const pick=player.groupPicks?.[g.id];
       const r=results.group?.[g.id];
-      const odds=r?.odds||"";
+      const ml=r?.moneyline||{};
       const correct=r&&pick===r.result;
-      const oddsHtml=odds?`<span class="game-odds">${odds}</span>`:"";
+      // Build odds line — show all three if any are set
+      const hasOdds=ml.home||ml.draw||ml.away;
+      const oddsLine=hasOdds?`<small style="display:flex;gap:10px;margin-top:3px">
+        <span style="color:var(--text2)">${g.home}: <span style="color:var(--gold);font-family:var(--font-m)">${ml.home||"—"}</span></span>
+        <span style="color:var(--text2)">Draw: <span style="color:var(--gold);font-family:var(--font-m)">${ml.draw||"—"}</span></span>
+        <span style="color:var(--text2)">${g.away}: <span style="color:var(--gold);font-family:var(--font-m)">${ml.away||"—"}</span></span>
+      </small>`:"";
       if(r?.result){
         const lbl=r.result==="draw"?"Draw":r.result==="home"?g.home:g.away;
         return `<div class="game-row">
           <div class="game-date">${g.date}</div>
           <div class="game-matchup">${g.home} vs ${g.away}
             <small>${lbl}${r.isUpset?' <span class="badge badge-gold">UPSET</span>':''}</small>
+            ${oddsLine}
           </div>
           <div class="${correct?"result-correct":"result-wrong"}">${pick?(correct?"✓ +"+(r.result==="draw"?2:1+(r.isUpset?1:0))+"pts":"✗ 0pts"):"—"}</div>
         </div>`;
       }
       if(locked) return `<div class="game-row">
         <div class="game-date">${g.date}</div>
-        <div class="game-matchup">${g.home} vs ${g.away}${oddsHtml?`<small>${oddsHtml}</small>`:""}</div>
+        <div class="game-matchup">${g.home} vs ${g.away}${oddsLine}</div>
         <div class="text-muted text-sm">${pick==="draw"?"Draw":pick||"—"}</div>
       </div>`;
-      return `<div class="game-row">
+      return `<div class="game-row" style="grid-template-columns:44px 1fr auto">
         <div class="game-date">${g.date}</div>
-        <div class="game-matchup" style="min-width:0">${g.home} vs ${g.away}${odds?`<small class="game-odds">${odds}</small>`:""}</div>
+        <div class="game-matchup">${g.home} vs ${g.away}${oddsLine}</div>
         <div class="pick-group">
           ${pickBtn(g.home,pick,g.id,false)}
           <button class="pick-btn draw-btn ${pick==="draw"?"selected":""}" onclick="makePick('${g.id}','draw')">Draw</button>
@@ -624,7 +648,7 @@ window.makeKoPick=async function(slotId,value){
   renderKoPicks();
 };
 
-// ── Leaderboard ───────────────────────────────────────────────
+// ── Leaderboard ──────────────────────────────────────���────────
 function renderLeaderboard(){
   const scored=allPlayers.map(p=>({...p,...calcPoints(p)})).sort((a,b)=>b.total-a.total);
   const rc=i=>i===0?"gold":i===1?"silver":i===2?"bronze":"";
@@ -710,13 +734,27 @@ function renderAdminGroup(){
     <div class="group-header" style="margin-top:8px">Group ${grp}</div>
     ${GROUP_GAMES.filter(g=>g.g===grp).map(g=>{
       const r=results.group?.[g.id]||{};
-      return `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      const ml=r.moneyline||{};
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           <span class="text-mono" style="color:var(--text3);font-size:11px;width:28px">${g.id}</span>
-          <span style="flex:1;font-size:13px">${g.home} vs ${g.away}</span>
-          <span style="font-size:11px;color:var(--text3)">Underdog odds:</span>
-          <input class="odds-input" id="odds-${g.id}" placeholder="+150" value="${r.odds||""}" title="Underdog moneyline e.g. +150">
+          <span style="flex:1;font-size:13px;font-weight:500">${g.home} vs ${g.away}</span>
+          <span style="font-size:11px;color:var(--text3)">${g.date}</span>
           ${r.result?`<span class="badge badge-green">${r.result==="draw"?"Draw":r.result==="home"?g.home:g.away}</span>`:""}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding-left:36px;margin-bottom:8px">
+          <div>
+            <div class="label" style="margin-bottom:4px">${g.home} ML</div>
+            <input class="odds-input" style="width:100%" id="ml-home-${g.id}" placeholder="-195" value="${ml.home||""}">
+          </div>
+          <div>
+            <div class="label" style="margin-bottom:4px">Draw ML</div>
+            <input class="odds-input" style="width:100%" id="ml-draw-${g.id}" placeholder="+330" value="${ml.draw||""}">
+          </div>
+          <div>
+            <div class="label" style="margin-bottom:4px">${g.away} ML</div>
+            <input class="odds-input" style="width:100%" id="ml-away-${g.id}" placeholder="+550" value="${ml.away||""}">
+          </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;padding-left:36px">
           <select class="result-select" id="res-${g.id}" onchange="saveGroupResult('${g.id}','${g.home}','${g.away}')">
@@ -769,7 +807,11 @@ function renderAdminPlayers(){
   list.innerHTML=allPlayers.map((p,i)=>`
     <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:${i<allPlayers.length-1?"1px solid var(--border)":"none"}">
       <div style="${avatarStyle(p.name)};border-radius:50%;width:32px;height:32px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">${initials(p.name)}</div>
-      <div style="flex:1"><div style="font-weight:500">${p.name}</div><div class="text-sm text-muted">${p.email}</div></div>
+      <div style="flex:1">
+        <div style="font-weight:500">${p.name}</div>
+        <div class="text-sm text-muted">${p.email}</div>
+        <div style="font-family:var(--font-m);font-size:11px;color:var(--gold);margin-top:2px">🔑 ${p.password||"—"}</div>
+      </div>
       <span class="text-mono text-muted" style="font-size:11px">${Object.keys(p.groupPicks||{}).length}/72</span>
       <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:var(--red)" onclick="removePlayer('${p.id}','${p.name}')">Remove</button>
     </div>`).join("");
@@ -778,14 +820,16 @@ function renderAdminPlayers(){
 window.saveGroupResult=async function(gameId,home,away){
   const result=document.getElementById(`res-${gameId}`).value;
   const isUpset=document.getElementById(`upset-${gameId}`).checked;
-  const odds=document.getElementById(`odds-${gameId}`).value.trim();
-  if(!result&&!odds) return;
+  const mlHome=document.getElementById(`ml-home-${gameId}`).value.trim();
+  const mlDraw=document.getElementById(`ml-draw-${gameId}`).value.trim();
+  const mlAway=document.getElementById(`ml-away-${gameId}`).value.trim();
   const cur=results.group||{};
   const existing=cur[gameId]||{};
-  const updated={...cur,[gameId]:{...existing,result:result||existing.result||"",isUpset,odds}};
+  const moneyline={home:mlHome,draw:mlDraw,away:mlAway};
+  const updated={...cur,[gameId]:{...existing,result:result||existing.result||"",isUpset,moneyline}};
   await setDoc(doc(db,"meta","results"),{...results,group:updated});
   const lbl=result==="draw"?"Draw":result==="home"?home:away;
-  showAdminMsg(`Saved: ${gameId}${result?" → "+lbl:""}${odds?" ("+odds+")":""}${isUpset?" ⚡ upset":""}`);
+  showAdminMsg(`Saved: ${gameId}${result?" → "+lbl:""}${isUpset?" ⚡ upset":""}`);
 };
 
 window.saveKoResult=async function(slotId){
