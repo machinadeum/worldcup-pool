@@ -123,14 +123,13 @@
   </div>
 </header>
 <nav>
-  <button class="nav-btn active" onclick="showPage('register',this)">Sign up / In</button>
+  <button class="nav-btn active" onclick="showPage('leaderboard',this)">Standings</button>
   <button class="nav-btn" onclick="showPage('picks',this)">My Picks</button>
-  <button class="nav-btn" onclick="showPage('leaderboard',this)">Standings</button>
   <button class="nav-btn" onclick="showPage('admin',this)">Admin</button>
 </nav>
 
-<!-- REGISTER -->
-<div class="page active" id="page-register">
+<!-- SIGN IN (registration disabled) -->
+<div class="page" id="page-register">
   <div id="signed-in-banner" style="display:none" class="card">
     <div class="flex-between">
       <div class="flex">
@@ -144,30 +143,18 @@
     </div>
   </div>
   <div id="auth-forms">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div style="max-width:360px;margin:0 auto">
       <div class="card">
-        <div class="card-title">New participant</div>
-        <div class="gap"><div class="label">Display name</div><input type="text" id="reg-name" placeholder="e.g. Mathew"></div>
-        <div class="gap"><div class="label">Email (private)</div><input type="email" id="reg-email" placeholder="you@email.com"></div>
-        <button class="btn" style="width:100%;margin-top:4px" onclick="register()">Register</button>
-        <div class="error-msg" id="reg-error"></div>
-        <!-- Password reveal shown after registration -->
-        <div id="reg-success" style="display:none;margin-top:16px;background:var(--surface2);border:1px solid var(--green);border-radius:var(--radius);padding:16px;">
-          <div style="color:var(--green);font-weight:600;font-size:13px;margin-bottom:8px">✓ Registered! Write down your password:</div>
-          <div id="reg-pw-display" style="font-family:var(--font-m);font-size:22px;font-weight:500;color:var(--gold);letter-spacing:2px;text-align:center;padding:12px 0;"></div>
-          <div style="font-size:11px;color:var(--text2);margin-top:8px;text-align:center">You'll need this to sign in. If you lose it, the pool admin can look it up for you.</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title">Already registered</div>
-        <div class="gap"><div class="label">Display name</div><input type="text" id="login-name" placeholder="Your display name"></div>
-        <div class="gap"><div class="label">Your generated password</div><input type="text" id="login-pw" placeholder="e.g. Soft742Road" onkeydown="if(event.key==='Enter')login()" autocomplete="off" spellcheck="false"></div>
-        <button class="btn btn-ghost" style="width:100%;margin-top:20px" onclick="login()">Sign in</button>
+        <div class="card-title">Sign in</div>
+        <div class="gap"><div class="label">Your name</div><input type="text" id="login-name" placeholder="Display name"></div>
+        <div class="gap"><div class="label">Password</div><input type="text" id="login-pw" placeholder="e.g. Soft742Road" onkeydown="if(event.key==='Enter')login()" autocomplete="off" spellcheck="false"></div>
+        <button class="btn" style="width:100%;margin-top:4px" onclick="login()">Sign in</button>
         <div class="error-msg" id="login-error"></div>
       </div>
+      <div style="text-align:center;font-size:12px;color:var(--text3);margin-top:8px">Registration is managed by the pool admin. Contact them if you haven't received your password.</div>
     </div>
   </div>
-  <div class="card">
+  <div class="card" style="margin-top:16px">
     <div class="flex-between gap"><div class="card-title" style="margin:0">Participants</div><span class="text-mono text-muted text-sm" id="participant-count">0 registered</span></div>
     <div id="participant-list" class="flex" style="flex-wrap:wrap;gap:8px"></div>
   </div>
@@ -198,7 +185,7 @@
 </div>
 
 <!-- LEADERBOARD -->
-<div class="page" id="page-leaderboard">
+<div class="page active" id="page-leaderboard">
   <div class="tabs">
     <button class="tab-btn active" onclick="switchLbTab('standings',this)">Standings</button>
     <button class="tab-btn" onclick="switchLbTab('picksheets',this)">Pick Sheets</button>
@@ -213,7 +200,7 @@
     <div class="text-sm text-muted" style="margin-top:8px;text-align:right" id="lb-updated"></div>
   </div>
   <div id="lb-tab-picksheets" style="display:none">
-    <div id="picks-hidden-notice" class="locked-bar" style="display:none">🔒 Pick sheets are hidden until the June 11 deadline passes</div>
+    <div id="picks-hidden-notice" class="locked-bar">🔒 Pick sheets will be visible once the admin opens them after kickoff on June 11</div>
     <div id="picksheets-container"></div>
   </div>
 </div>
@@ -234,12 +221,60 @@
     <div class="tabs">
       <button class="tab-btn active" onclick="switchAdminTab('group',this)">Group Results</button>
       <button class="tab-btn" onclick="switchAdminTab('ko',this)">KO Results</button>
-      <button class="tab-btn" onclick="switchAdminTab('players',this)">Players</button>
+      <button class="tab-btn" onclick="switchAdminTab('players',this)">Manage Players</button>
+      <button class="tab-btn" onclick="switchAdminTab('settings',this)">Settings</button>
     </div>
     <div id="admin-msg" style="display:none;margin-bottom:12px"></div>
     <div id="admin-tab-group"><div id="admin-group-container"></div></div>
     <div id="admin-tab-ko" style="display:none"><div id="admin-ko-container"></div></div>
-    <div id="admin-tab-players" style="display:none"><div class="card" style="padding:0;overflow:hidden"><div id="admin-players-list"></div></div></div>
+    <div id="admin-tab-players" style="display:none">
+      <!-- Create player form -->
+      <div class="card">
+        <div class="card-title">Create player profile</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div><div class="label">Display name</div><input type="text" id="admin-new-name" placeholder="Player name"></div>
+          <div><div class="label">Email (private)</div><input type="email" id="admin-new-email" placeholder="player@email.com"></div>
+        </div>
+        <div class="flex" style="gap:10px;align-items:center">
+          <button class="btn btn-sm" onclick="adminCreatePlayer()">Create &amp; get password</button>
+          <div id="admin-new-pw-display" style="font-family:var(--font-m);font-size:16px;color:var(--gold);display:none"></div>
+        </div>
+        <div class="error-msg" id="admin-new-error"></div>
+      </div>
+      <!-- Player list -->
+      <div class="card" style="padding:0;overflow:hidden"><div id="admin-players-list"></div></div>
+    </div>
+    <div id="admin-tab-settings" style="display:none">
+      <div class="card">
+        <div class="card-title">Pick sheet visibility</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px">When picks are visible, all players can see each other's full pick sheets on the Standings page. Turn this on once the first game kicks off.</p>
+        <div class="flex-between" style="align-items:center">
+          <div>
+            <div style="font-weight:500" id="picks-visible-label">Picks: Hidden</div>
+            <div class="text-sm text-muted" id="picks-visible-sublabel">Players cannot see each other's picks</div>
+          </div>
+          <button class="btn" id="picks-toggle-btn" onclick="togglePicksVisible()">Make picks public</button>
+        </div>
+      </div>
+      <div class="card" style="margin-top:0">
+        <div class="card-title">Make picks for a player</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Select a player to enter their picks on their behalf.</p>
+        <div class="gap">
+          <div class="label">Select player</div>
+          <select class="result-select" id="admin-pick-player" style="width:100%;padding:10px 14px;font-size:14px" onchange="loadAdminPickPlayer()">
+            <option value="">— choose player —</option>
+          </select>
+        </div>
+        <div id="admin-pick-content" style="display:none;margin-top:16px">
+          <div class="tabs" style="margin-bottom:12px">
+            <button class="tab-btn active" onclick="switchAdminPickTab('group',this)">Group picks</button>
+            <button class="tab-btn" onclick="switchAdminPickTab('ko',this)">KO picks</button>
+          </div>
+          <div id="admin-pick-tab-group"><div id="admin-pick-group-container"></div></div>
+          <div id="admin-pick-tab-ko" style="display:none"><div id="admin-pick-ko-container"></div></div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -259,7 +294,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
-const ADMIN_PASSWORD = "admin2026";
+const ADMIN_PASSWORD = "Land226Blue";
 const GROUP_DEADLINE = new Date("2026-06-11T19:00:00Z");
 const KO_DEADLINE    = new Date("2026-06-28T12:00:00Z");
 
@@ -285,7 +320,7 @@ const TEAMS = {
   "Argentina":{flag:"🇦🇷",code:"ARG"},"Algeria":{flag:"🇩🇿",code:"ALG"},
   "Austria":{flag:"🇦🇹",code:"AUT"},"Jordan":{flag:"🇯🇴",code:"JOR"},
   "Portugal":{flag:"🇵🇹",code:"POR"},"DR Congo":{flag:"🇨🇩",code:"COD"},
-  "Uzbekistan":{flag:"���🇿",code:"UZB"},"Colombia":{flag:"🇨🇴",code:"COL"},
+  "Uzbekistan":{flag:"🇺🇿",code:"UZB"},"Colombia":{flag:"🇨🇴",code:"COL"},
   "England":{flag:"🇬🇧",code:"ENG"},"Croatia":{flag:"🇭🇷",code:"CRO"},
   "Ghana":{flag:"🇬🇭",code:"GHA"},"Panama":{flag:"🇵🇦",code:"PAN"},
 };
@@ -385,6 +420,7 @@ const AVATAR_TEXT  =["#00C853","#a78bfa","#FFD600","#38bdf8","#f472b6","#34d399"
 
 let currentPlayer=JSON.parse(localStorage.getItem("wc_player")||"null");
 let allPlayers=[]; let results={group:{},ko:{}}; let adminAuthed=false;
+let picksVisible=false; let adminPickingFor=null;
 
 function avatarStyle(n){const i=(n.charCodeAt(0)||0)%AVATAR_COLORS.length;return `background:${AVATAR_COLORS[i]};color:${AVATAR_TEXT[i]}`;}
 function initials(n){return n.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();}
@@ -413,11 +449,19 @@ async function boot(){
     results=snap.exists()?snap.data():{group:{},ko:{}};
     refreshAll();
   });
+  onSnapshot(doc(db,"meta","settings"),snap=>{
+    picksVisible=snap.exists()?(snap.data().picksVisible||false):false;
+    refreshAll();
+  });
   onSnapshot(collection(db,"players"),snap=>{
     allPlayers=snap.docs.map(d=>({id:d.id,...d.data()}));
     refreshAll();
   });
-  setTimeout(()=>{document.getElementById("loading").style.display="none"; refreshAll();},1200);
+  setTimeout(()=>{
+    document.getElementById("loading").style.display="none";
+    // Default landing page: leaderboard
+    showPage('leaderboard', document.querySelectorAll('.nav-btn')[0]);
+  },1200);
 }
 
 window.showPage=function(id,btn){
@@ -443,9 +487,17 @@ window.switchLbTab=function(tab,btn){
   if(tab==="picksheets") renderPickSheets();
 };
 window.switchAdminTab=function(tab,btn){
-  document.querySelectorAll("#admin-tab-group,#admin-tab-ko,#admin-tab-players").forEach(el=>el.style.display="none");
+  document.querySelectorAll("#admin-tab-group,#admin-tab-ko,#admin-tab-players,#admin-tab-settings")
+    .forEach(el=>el.style.display="none");
   document.getElementById("admin-tab-"+tab).style.display="block";
-  document.querySelectorAll("#admin-panel .tab-btn").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll("#admin-panel .tabs .tab-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  if(tab==="settings") renderAdminSettings();
+};
+window.switchAdminPickTab=function(tab,btn){
+  document.querySelectorAll("#admin-pick-tab-group,#admin-pick-tab-ko").forEach(el=>el.style.display="none");
+  document.getElementById("admin-pick-tab-"+tab).style.display="block";
+  document.querySelectorAll("#admin-pick-content .tab-btn").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
 };
 
@@ -454,30 +506,10 @@ const PW_LIST1=["Soft","Weak","Strong","Wise","Kind","Rare","Rich","Poor","Deep"
 const PW_LIST2=["Road","Door","City","Town","Bank","Shop","Site","Fish","Film","Park","Ball","Race","Gold","Wood","Wind","Farm","Rock","Tree","Star","Hope"];
 function generatePassword(){
   const w1=PW_LIST1[Math.floor(Math.random()*PW_LIST1.length)];
-  const num=String(Math.floor(Math.random()*900)+100); // 100–999
+  const num=String(Math.floor(Math.random()*900)+100);
   const w2=PW_LIST2[Math.floor(Math.random()*PW_LIST2.length)];
   return w1+num+w2;
 }
-
-window.register=async function(){
-  const name=document.getElementById("reg-name").value.trim();
-  const email=document.getElementById("reg-email").value.trim();
-  const errEl=document.getElementById("reg-error"); errEl.textContent="";
-  document.getElementById("reg-success").style.display="none";
-  if(!name||!email){errEl.textContent="Please fill in both fields.";return;}
-  if(!email.includes("@")){errEl.textContent="Enter a valid email.";return;}
-  if(allPlayers.find(p=>p.name.toLowerCase()===name.toLowerCase())){errEl.textContent="That name is taken — try a different display name.";return;}
-  const pw=generatePassword();
-  const id=name.toLowerCase().replace(/\s+/g,"_")+"_"+Date.now();
-  const player={name,email,password:pw,groupPicks:{},koPicks:{},createdAt:new Date().toISOString()};
-  await setDoc(doc(db,"players",id),player);
-  currentPlayer={id,...player}; localStorage.setItem("wc_player",JSON.stringify(currentPlayer));
-  updateHeaderPlayer();
-  document.getElementById("reg-name").value="";
-  document.getElementById("reg-email").value="";
-  document.getElementById("reg-pw-display").textContent=pw;
-  document.getElementById("reg-success").style.display="block";
-};
 
 window.login=async function(){
   const name=document.getElementById("login-name").value.trim();
@@ -487,11 +519,14 @@ window.login=async function(){
   if(!found){errEl.textContent="No player found with that name.";return;}
   if(found.password.toLowerCase()!==pw.toLowerCase()){errEl.textContent="Incorrect password. Ask the admin if you've forgotten it.";return;}
   currentPlayer=found; localStorage.setItem("wc_player",JSON.stringify(currentPlayer));
-  updateHeaderPlayer(); document.getElementById("login-name").value=""; document.getElementById("login-pw").value="";
+  updateHeaderPlayer();
+  document.getElementById("login-name").value=""; document.getElementById("login-pw").value="";
+  showPage('picks', document.querySelectorAll('.nav-btn')[1]);
 };
 
 window.signOut=function(){
   currentPlayer=null; localStorage.removeItem("wc_player"); updateHeaderPlayer(); refreshAll();
+  showPage('leaderboard', document.querySelectorAll('.nav-btn')[0]);
 };
 
 function updateHeaderPlayer(){
@@ -648,7 +683,7 @@ window.makeKoPick=async function(slotId,value){
   renderKoPicks();
 };
 
-// ── Leaderboard ──────────────────────────────────────���────────
+// ── Leaderboard ───────────────────────────────────────────────
 function renderLeaderboard(){
   const scored=allPlayers.map(p=>({...p,...calcPoints(p)})).sort((a,b)=>b.total-a.total);
   const rc=i=>i===0?"gold":i===1?"silver":i===2?"bronze":"";
@@ -673,10 +708,9 @@ function renderLeaderboard(){
 }
 
 function renderPickSheets(){
-  const visible=new Date()>=GROUP_DEADLINE;
-  document.getElementById("picks-hidden-notice").style.display=visible?"none":"block";
+  document.getElementById("picks-hidden-notice").style.display=picksVisible?"none":"block";
   const container=document.getElementById("picksheets-container");
-  if(!visible){container.innerHTML="";return;}
+  if(!picksVisible){container.innerHTML="";return;}
   const scored=allPlayers.map(p=>({...p,...calcPoints(p)})).sort((a,b)=>b.total-a.total);
   container.innerHTML=scored.map(p=>`
     <div class="card" style="padding:0;overflow:hidden;margin-bottom:10px">
@@ -698,6 +732,16 @@ function renderPickSheets(){
             <span class="text-muted" style="flex:1">${g.home} vs ${g.away}</span>
             <span style="color:${pick?"var(--text)":"var(--text3)"}">${lbl}</span>
             ${r?`<span style="color:${correct?"var(--green)":"var(--red)"};width:16px;text-align:right">${correct?"✓":"✗"}</span>`:""}
+          </div>`;
+        }).join("")}
+        ${KO_SLOTS.filter(s=>results.ko?.[s.id]?.teamA||p.koPicks?.[s.id]).map(s=>{
+          const pick=p.koPicks?.[s.id]; const r=results.ko?.[s.id];
+          const correct=r&&pick===r.winner;
+          return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">
+            <span class="text-mono" style="color:var(--text3);width:28px">${s.id}</span>
+            <span class="text-muted" style="flex:1">${KO_LABELS[s.round]}</span>
+            <span style="color:${pick?"var(--text)":"var(--text3)"}">${pick||"—"}</span>
+            ${r?.winner?`<span style="color:${correct?"var(--green)":"var(--red)"};width:16px;text-align:right">${correct?"✓":"✗"}</span>`:""}
           </div>`;
         }).join("")}
       </div>
@@ -724,8 +768,139 @@ function showAdminMsg(msg,type="success"){
 
 function renderAdmin(){
   if(!adminAuthed) return;
-  renderAdminGroup(); renderAdminKo(); renderAdminPlayers();
+  renderAdminGroup(); renderAdminKo(); renderAdminPlayers(); renderAdminSettings();
 }
+
+// ── Admin: create player ──────────────────────────────────────
+window.adminCreatePlayer=async function(){
+  const name=document.getElementById("admin-new-name").value.trim();
+  const email=document.getElementById("admin-new-email").value.trim();
+  const errEl=document.getElementById("admin-new-error"); errEl.textContent="";
+  document.getElementById("admin-new-pw-display").style.display="none";
+  if(!name||!email){errEl.textContent="Name and email required.";return;}
+  if(!email.includes("@")){errEl.textContent="Enter a valid email.";return;}
+  if(allPlayers.find(p=>p.name.toLowerCase()===name.toLowerCase())){errEl.textContent="Name already taken.";return;}
+  const pw=generatePassword();
+  const id=name.toLowerCase().replace(/\s+/g,"_")+"_"+Date.now();
+  const player={name,email,password:pw,groupPicks:{},koPicks:{},createdAt:new Date().toISOString()};
+  await setDoc(doc(db,"players",id),player);
+  document.getElementById("admin-new-name").value="";
+  document.getElementById("admin-new-email").value="";
+  const pwEl=document.getElementById("admin-new-pw-display");
+  pwEl.textContent=`✓ ${name} created · password: ${pw}`;
+  pwEl.style.display="block";
+  showAdminMsg(`Player "${name}" created with password: ${pw}`);
+};
+
+// ── Admin: picks visibility toggle ───────────────────────────
+window.togglePicksVisible=async function(){
+  const newVal=!picksVisible;
+  await setDoc(doc(db,"meta","settings"),{picksVisible:newVal});
+  showAdminMsg(newVal?"✓ Picks are now PUBLIC — players can see each other's sheets":"✓ Picks hidden from players");
+};
+
+function renderAdminSettings(){
+  const lbl=document.getElementById("picks-visible-label");
+  const sub=document.getElementById("picks-visible-sublabel");
+  const btn=document.getElementById("picks-toggle-btn");
+  if(!lbl) return;
+  if(picksVisible){
+    lbl.textContent="Picks: PUBLIC ✓";
+    lbl.style.color="var(--green)";
+    sub.textContent="All players can see each other's pick sheets";
+    btn.textContent="Hide picks";
+    btn.className="btn btn-ghost btn-sm";
+  } else {
+    lbl.textContent="Picks: Hidden";
+    lbl.style.color="var(--text2)";
+    sub.textContent="Players cannot see each other's picks";
+    btn.textContent="Make picks public";
+    btn.className="btn btn-sm";
+  }
+  // Populate player dropdown for admin picking
+  const sel=document.getElementById("admin-pick-player");
+  const curVal=sel.value;
+  sel.innerHTML=`<option value="">— choose player —</option>`+
+    allPlayers.map(p=>`<option value="${p.id}" ${p.id===curVal?"selected":""}>${p.name}</option>`).join("");
+}
+
+// ── Admin: make picks for a player ───────────────────────────
+window.loadAdminPickPlayer=function(){
+  const id=document.getElementById("admin-pick-player").value;
+  if(!id){document.getElementById("admin-pick-content").style.display="none";return;}
+  adminPickingFor=allPlayers.find(p=>p.id===id)||null;
+  document.getElementById("admin-pick-content").style.display="block";
+  renderAdminPickGroup(); renderAdminPickKo();
+};
+
+function renderAdminPickGroup(){
+  if(!adminPickingFor) return;
+  const p=adminPickingFor;
+  const container=document.getElementById("admin-pick-group-container");
+  const groups=["A","B","C","D","E","F","G","H","I","J","K","L"];
+  container.innerHTML=groups.map(grp=>`
+    <div class="group-header" style="margin-top:8px">Group ${grp}</div>
+    ${GROUP_GAMES.filter(g=>g.g===grp).map(g=>{
+      const pick=p.groupPicks?.[g.id];
+      const r=results.group?.[g.id];
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span class="text-mono" style="color:var(--text3);font-size:11px;width:28px">${g.id}</span>
+        <span style="flex:1;font-size:13px">${g.home} vs ${g.away}</span>
+        <select class="result-select" onchange="adminSetGroupPick('${g.id}',this.value)">
+          <option value="">— pick —</option>
+          <option value="${g.home}" ${pick===g.home?"selected":""}>${g.home}</option>
+          <option value="draw" ${pick==="draw"?"selected":""}>Draw</option>
+          <option value="${g.away}" ${pick===g.away?"selected":""}>${g.away}</option>
+        </select>
+        ${r?.result?`<span class="badge badge-green text-sm">${r.result==="draw"?"Draw":r.result==="home"?g.home:g.away}</span>`:""}
+      </div>`;
+    }).join("")}`).join("");
+}
+
+function renderAdminPickKo(){
+  if(!adminPickingFor) return;
+  const p=adminPickingFor;
+  const container=document.getElementById("admin-pick-ko-container");
+  const rounds=["R32","R16","QF","SF","F"];
+  container.innerHTML=rounds.map(rnd=>`
+    <div class="group-header" style="margin-top:8px">${KO_LABELS[rnd]}</div>
+    ${KO_SLOTS.filter(s=>s.round===rnd).map(s=>{
+      const r=results.ko?.[s.id]; const pick=p.koPicks?.[s.id];
+      const tA=r?.teamA||""; const tB=r?.teamB||"";
+      if(!tA&&!tB) return `<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3)">${s.id} — teams TBD</div>`;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span class="text-mono" style="color:var(--text3);font-size:11px;width:44px">${s.id}</span>
+        <span style="flex:1;font-size:13px">${tA} vs ${tB}</span>
+        <select class="result-select" onchange="adminSetKoPick('${s.id}',this.value)">
+          <option value="">— pick —</option>
+          ${tA?`<option value="${tA}" ${pick===tA?"selected":""}>${tA}</option>`:""}
+          ${tB?`<option value="${tB}" ${pick===tB?"selected":""}>${tB}</option>`:""}
+        </select>
+        ${r?.winner?`<span class="badge badge-green">${r.winner}</span>`:""}
+      </div>`;
+    }).join("")}`).join("");
+}
+
+window.adminSetGroupPick=async function(gameId,value){
+  if(!adminPickingFor) return;
+  const picks={...(adminPickingFor.groupPicks||{}),[gameId]:value};
+  if(!value){delete picks[gameId];}
+  await updateDoc(doc(db,"players",adminPickingFor.id),{groupPicks:picks});
+  adminPickingFor.groupPicks=picks;
+  // Sync in allPlayers
+  const idx=allPlayers.findIndex(p=>p.id===adminPickingFor.id);
+  if(idx>=0) allPlayers[idx].groupPicks=picks;
+};
+
+window.adminSetKoPick=async function(slotId,value){
+  if(!adminPickingFor) return;
+  const picks={...(adminPickingFor.koPicks||{}),[slotId]:value};
+  if(!value){delete picks[slotId];}
+  await updateDoc(doc(db,"players",adminPickingFor.id),{koPicks:picks});
+  adminPickingFor.koPicks=picks;
+  const idx=allPlayers.findIndex(p=>p.id===adminPickingFor.id);
+  if(idx>=0) allPlayers[idx].koPicks=picks;
+};
 
 function renderAdminGroup(){
   const container=document.getElementById("admin-group-container");
