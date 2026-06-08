@@ -39,12 +39,12 @@
   .badge-gold{background:rgba(255,214,0,.15);color:var(--gold);}
   .badge-red{background:rgba(255,61,61,.15);color:var(--red);}
   .badge-gray{background:var(--surface3);color:var(--text2);}
-  /* Pick buttons — flag+code style */
+  /* Pick buttons — flag image + code style */
   .pick-group{display:flex;gap:4px;}
-  .pick-btn{flex:1;padding:10px 6px;font-size:13px;font-family:var(--font-b);background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer;transition:all .1s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:60px;}
-  .pick-btn .flag{font-size:20px;line-height:1;}
+  .pick-btn{flex:1;padding:10px 6px;font-size:13px;font-family:var(--font-b);background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer;transition:all .1s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px;min-width:64px;}
+  .pick-btn .flag-img{width:28px;height:19px;border-radius:2px;object-fit:cover;display:block;}
   .pick-btn .code{font-size:10px;font-family:var(--font-m);font-weight:500;letter-spacing:.5px;}
-  .pick-btn.draw-btn{font-size:11px;font-weight:500;padding:10px 4px;}
+  .pick-btn.draw-btn{font-size:11px;font-weight:500;padding:10px 6px;justify-content:center;}
   .pick-btn:hover{border-color:var(--green);color:var(--text);}
   .pick-btn.selected{background:rgba(0,200,83,.15);border-color:var(--green);color:var(--green);}
   /* Game rows */
@@ -124,6 +124,7 @@
 </header>
 <nav>
   <button class="nav-btn active" onclick="showPage('leaderboard',this)">Standings</button>
+  <button class="nav-btn" onclick="showPage('register',this)">Sign In</button>
   <button class="nav-btn" onclick="showPage('picks',this)">My Picks</button>
   <button class="nav-btn" onclick="showPage('admin',this)">Admin</button>
 </nav>
@@ -136,7 +137,7 @@
         <div class="avatar" id="banner-avatar" style="width:36px;height:36px;font-size:13px"></div>
         <div>
           <div style="font-weight:600" id="banner-name"></div>
-          <div class="text-sm text-muted">Signed in · <a href="#" onclick="showPage('picks',document.querySelectorAll('.nav-btn')[1])" style="color:var(--green);text-decoration:none">Make your picks →</a></div>
+          <div class="text-sm text-muted">Signed in · <a href="#" onclick="showPage('picks',document.querySelectorAll('.nav-btn')[2])" style="color:var(--green);text-decoration:none">Make your picks →</a></div>
         </div>
       </div>
       <button class="btn btn-ghost btn-sm" onclick="signOut()">Sign out</button>
@@ -298,34 +299,39 @@ const ADMIN_PASSWORD = "Land226Blue";
 const GROUP_DEADLINE = new Date("2026-06-11T19:00:00Z");
 const KO_DEADLINE    = new Date("2026-06-28T12:00:00Z");
 
+// iso2 = 2-letter ISO country code for flagcdn.com
 const TEAMS = {
-  "Mexico":{flag:"🇲🇽",code:"MEX"},"South Africa":{flag:"🇿🇦",code:"RSA"},
-  "South Korea":{flag:"🇰🇷",code:"KOR"},"Czechia":{flag:"🇨🇿",code:"CZE"},
-  "Canada":{flag:"🇨🇦",code:"CAN"},"Bosnia and Herzegovina":{flag:"🇧🇦",code:"BIH"},
-  "Qatar":{flag:"🇶🇦",code:"QAT"},"Switzerland":{flag:"🇨🇭",code:"SUI"},
-  "Brazil":{flag:"🇧🇷",code:"BRA"},"Morocco":{flag:"🇲🇦",code:"MAR"},
-  "Haiti":{flag:"🇭🇹",code:"HAI"},"Scotland":{flag:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",code:"SCO"},
-  "USA":{flag:"🇺🇸",code:"USA"},"Paraguay":{flag:"🇵🇾",code:"PAR"},
-  "Australia":{flag:"🇦🇺",code:"AUS"},"Türkiye":{flag:"🇹🇷",code:"TUR"},
-  "Germany":{flag:"🇩🇪",code:"GER"},"Curaçao":{flag:"🇨🇼",code:"CUW"},
-  "Ivory Coast":{flag:"🇨🇮",code:"CIV"},"Ecuador":{flag:"🇪🇨",code:"ECU"},
-  "Netherlands":{flag:"🇳🇱",code:"NED"},"Japan":{flag:"🇯🇵",code:"JPN"},
-  "Sweden":{flag:"🇸🇪",code:"SWE"},"Tunisia":{flag:"🇹🇳",code:"TUN"},
-  "Belgium":{flag:"🇧🇪",code:"BEL"},"Egypt":{flag:"🇪🇬",code:"EGY"},
-  "Iran":{flag:"🇮🇷",code:"IRN"},"New Zealand":{flag:"🇳🇿",code:"NZL"},
-  "Spain":{flag:"🇪🇸",code:"ESP"},"Cape Verde":{flag:"🇨🇻",code:"CPV"},
-  "Saudi Arabia":{flag:"🇸🇦",code:"KSA"},"Uruguay":{flag:"🇺🇾",code:"URU"},
-  "France":{flag:"🇫🇷",code:"FRA"},"Senegal":{flag:"🇸🇳",code:"SEN"},
-  "Iraq":{flag:"🇮🇶",code:"IRQ"},"Norway":{flag:"🇳🇴",code:"NOR"},
-  "Argentina":{flag:"🇦🇷",code:"ARG"},"Algeria":{flag:"🇩🇿",code:"ALG"},
-  "Austria":{flag:"🇦🇹",code:"AUT"},"Jordan":{flag:"🇯🇴",code:"JOR"},
-  "Portugal":{flag:"🇵🇹",code:"POR"},"DR Congo":{flag:"🇨🇩",code:"COD"},
-  "Uzbekistan":{flag:"🇺🇿",code:"UZB"},"Colombia":{flag:"🇨🇴",code:"COL"},
-  "England":{flag:"🇬🇧",code:"ENG"},"Croatia":{flag:"🇭🇷",code:"CRO"},
-  "Ghana":{flag:"🇬🇭",code:"GHA"},"Panama":{flag:"🇵🇦",code:"PAN"},
+  "Mexico":{iso2:"mx",code:"MEX"},"South Africa":{iso2:"za",code:"RSA"},
+  "South Korea":{iso2:"kr",code:"KOR"},"Czechia":{iso2:"cz",code:"CZE"},
+  "Canada":{iso2:"ca",code:"CAN"},"Bosnia and Herzegovina":{iso2:"ba",code:"BIH"},
+  "Qatar":{iso2:"qa",code:"QAT"},"Switzerland":{iso2:"ch",code:"SUI"},
+  "Brazil":{iso2:"br",code:"BRA"},"Morocco":{iso2:"ma",code:"MAR"},
+  "Haiti":{iso2:"ht",code:"HAI"},"Scotland":{iso2:"gb-sct",code:"SCO"},
+  "USA":{iso2:"us",code:"USA"},"Paraguay":{iso2:"py",code:"PAR"},
+  "Australia":{iso2:"au",code:"AUS"},"Türkiye":{iso2:"tr",code:"TUR"},
+  "Germany":{iso2:"de",code:"GER"},"Curaçao":{iso2:"cw",code:"CUW"},
+  "Ivory Coast":{iso2:"ci",code:"CIV"},"Ecuador":{iso2:"ec",code:"ECU"},
+  "Netherlands":{iso2:"nl",code:"NED"},"Japan":{iso2:"jp",code:"JPN"},
+  "Sweden":{iso2:"se",code:"SWE"},"Tunisia":{iso2:"tn",code:"TUN"},
+  "Belgium":{iso2:"be",code:"BEL"},"Egypt":{iso2:"eg",code:"EGY"},
+  "Iran":{iso2:"ir",code:"IRN"},"New Zealand":{iso2:"nz",code:"NZL"},
+  "Spain":{iso2:"es",code:"ESP"},"Cape Verde":{iso2:"cv",code:"CPV"},
+  "Saudi Arabia":{iso2:"sa",code:"KSA"},"Uruguay":{iso2:"uy",code:"URU"},
+  "France":{iso2:"fr",code:"FRA"},"Senegal":{iso2:"sn",code:"SEN"},
+  "Iraq":{iso2:"iq",code:"IRQ"},"Norway":{iso2:"no",code:"NOR"},
+  "Argentina":{iso2:"ar",code:"ARG"},"Algeria":{iso2:"dz",code:"ALG"},
+  "Austria":{iso2:"at",code:"AUT"},"Jordan":{iso2:"jo",code:"JOR"},
+  "Portugal":{iso2:"pt",code:"POR"},"DR Congo":{iso2:"cd",code:"COD"},
+  "Uzbekistan":{iso2:"uz",code:"UZB"},"Colombia":{iso2:"co",code:"COL"},
+  "England":{iso2:"gb-eng",code:"ENG"},"Croatia":{iso2:"hr",code:"CRO"},
+  "Ghana":{iso2:"gh",code:"GHA"},"Panama":{iso2:"pa",code:"PAN"},
 };
 
-function tf(n){return (TEAMS[n]||{flag:"🏳️",code:n.slice(0,3).toUpperCase()});}
+function flagImg(iso2){
+  return `<img class="flag-img" src="https://flagcdn.com/w40/${iso2}.png" alt="" loading="lazy">`;
+}
+function tf(n){return TEAMS[n]||{iso2:"un",code:n.slice(0,3).toUpperCase()};}
+
 
 const GROUP_GAMES = [
   {id:"A1",g:"A",home:"Mexico",away:"South Africa",date:"Jun 11"},
@@ -521,7 +527,7 @@ window.login=async function(){
   currentPlayer=found; localStorage.setItem("wc_player",JSON.stringify(currentPlayer));
   updateHeaderPlayer();
   document.getElementById("login-name").value=""; document.getElementById("login-pw").value="";
-  showPage('picks', document.querySelectorAll('.nav-btn')[1]);
+  showPage('picks', document.querySelectorAll('.nav-btn')[2]);
 };
 
 window.signOut=function(){
@@ -585,7 +591,7 @@ function pickBtn(team,pickVal,gameId,isKo){
   const t=tf(team); const sel=pickVal===team;
   const fn=isKo?`makeKoPick('${gameId}','${team}')`:`makePick('${gameId}','${team}')`;
   return `<button class="pick-btn ${sel?"selected":""}" onclick="${fn}">
-    <span class="flag">${t.flag}</span><span class="code">${t.code}</span>
+    ${flagImg(t.iso2)}<span class="code">${t.code}</span>
   </button>`;
 }
 
