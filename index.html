@@ -436,13 +436,16 @@ function koLocked(){return new Date()>=KO_DEADLINE;}
 function calcPoints(player){
   let total=0; const byRound={Group:0,R32:0,R16:0,QF:0,SF:0,F:0};
   GROUP_GAMES.forEach(g=>{
-    const r=results.group?.[g.id]; if(!r) return;
-    const pick=player.groupPicks?.[g.id]; if(!pick||pick!==r.result) return;
-    const pts=r.result==="draw"?2:1+(r.isUpset?1:0);
+    const r=results.group?.[g.id]; if(!r||!r.result) return;
+    const pick=player.groupPicks?.[g.id]; if(!pick) return;
+    // Translate stored result ("home"/"draw"/"away") into pick-comparable value
+    const resultVal = r.result==="home" ? g.home : r.result==="away" ? g.away : "draw";
+    if(pick!==resultVal) return;
+    const pts=resultVal==="draw" ? 2 : 1+(r.isUpset?1:0);
     total+=pts; byRound.Group+=pts;
   });
   KO_SLOTS.forEach(s=>{
-    const r=results.ko?.[s.id]; if(!r) return;
+    const r=results.ko?.[s.id]; if(!r||!r.winner) return;
     const pick=player.koPicks?.[s.id]; if(!pick||pick!==r.winner) return;
     const pts=s.pts+(r.isUpset?1:0);
     total+=pts; byRound[s.round]=(byRound[s.round]||0)+pts;
@@ -605,7 +608,9 @@ function renderGroupPicks(){
       const pick=player.groupPicks?.[g.id];
       const r=results.group?.[g.id];
       const ml=r?.moneyline||{};
-      const correct=r&&pick===r.result;
+      // Translate stored result to team name / "draw" for comparison with pick
+      const resultVal=r?.result==="home"?g.home:r?.result==="away"?g.away:r?.result==="draw"?"draw":null;
+      const correct=resultVal&&pick===resultVal;
       // Build odds line — show all three if any are set
       const hasOdds=ml.home||ml.draw||ml.away;
       const oddsLine=hasOdds?`<small style="display:flex;gap:10px;margin-top:3px">
@@ -613,15 +618,16 @@ function renderGroupPicks(){
         <span style="color:var(--text2)">Draw: <span style="color:var(--gold);font-family:var(--font-m)">${ml.draw||"—"}</span></span>
         <span style="color:var(--text2)">${g.away}: <span style="color:var(--gold);font-family:var(--font-m)">${ml.away||"—"}</span></span>
       </small>`:"";
-      if(r?.result){
-        const lbl=r.result==="draw"?"Draw":r.result==="home"?g.home:g.away;
+      if(resultVal){
+        const lbl=resultVal==="draw"?"Draw":resultVal;
+        const pts=resultVal==="draw"?2:1+(r.isUpset?1:0);
         return `<div class="game-row">
           <div class="game-date">${g.date}</div>
           <div class="game-matchup">${g.home} vs ${g.away}
             <small>${lbl}${r.isUpset?' <span class="badge badge-gold">UPSET</span>':''}</small>
             ${oddsLine}
           </div>
-          <div class="${correct?"result-correct":"result-wrong"}">${pick?(correct?"✓ +"+(r.result==="draw"?2:1+(r.isUpset?1:0))+"pts":"✗ 0pts"):"—"}</div>
+          <div class="${correct?"result-correct":"result-wrong"}">${pick?(correct?"✓ +"+pts+"pts":"✗ 0pts"):"—"}</div>
         </div>`;
       }
       if(locked) return `<div class="game-row">
@@ -731,13 +737,14 @@ function renderPickSheets(){
       <div class="accordion-body" id="acc-${p.id}">
         ${GROUP_GAMES.map(g=>{
           const pick=p.groupPicks?.[g.id]; const r=results.group?.[g.id];
-          const correct=r&&pick===r.result;
+          const resultVal=r?.result==="home"?g.home:r?.result==="away"?g.away:r?.result==="draw"?"draw":null;
+          const correct=resultVal&&pick===resultVal;
           const lbl=pick==="draw"?"Draw":pick||"—";
           return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">
             <span class="text-mono" style="color:var(--text3);width:28px">${g.id}</span>
             <span class="text-muted" style="flex:1">${g.home} vs ${g.away}</span>
             <span style="color:${pick?"var(--text)":"var(--text3)"}">${lbl}</span>
-            ${r?`<span style="color:${correct?"var(--green)":"var(--red)"};width:16px;text-align:right">${correct?"✓":"✗"}</span>`:""}
+            ${resultVal?`<span style="color:${correct?"var(--green)":"var(--red)"};width:16px;text-align:right">${correct?"✓":"✗"}</span>`:""}
           </div>`;
         }).join("")}
         ${KO_SLOTS.filter(s=>results.ko?.[s.id]?.teamA||p.koPicks?.[s.id]).map(s=>{
