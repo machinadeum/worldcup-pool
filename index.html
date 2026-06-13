@@ -334,76 +334,93 @@ function tf(n){return TEAMS[n]||{iso2:"un",code:n.slice(0,3).toUpperCase()};}
 
 
 const GROUP_GAMES = [
+  // Jun 11
   {id:"A1",g:"A",home:"Mexico",away:"South Africa",date:"Jun 11"},
   {id:"A2",g:"A",home:"South Korea",away:"Czechia",date:"Jun 11"},
-  {id:"A3",g:"A",home:"Czechia",away:"South Africa",date:"Jun 18"},
-  {id:"A4",g:"A",home:"Mexico",away:"South Korea",date:"Jun 18"},
-  {id:"A5",g:"A",home:"Czechia",away:"Mexico",date:"Jun 24"},
-  {id:"A6",g:"A",home:"South Africa",away:"South Korea",date:"Jun 24"},
+  // Jun 12
+  {id:"D1",g:"D",home:"USA",away:"Paraguay",date:"Jun 12"},
   {id:"B1",g:"B",home:"Canada",away:"Bosnia and Herzegovina",date:"Jun 12"},
+  {id:"D2",g:"D",home:"Australia",away:"Türkiye",date:"Jun 12"},
+  // Jun 13
   {id:"B2",g:"B",home:"Qatar",away:"Switzerland",date:"Jun 13"},
-  {id:"B3",g:"B",home:"Switzerland",away:"Bosnia and Herzegovina",date:"Jun 18"},
-  {id:"B4",g:"B",home:"Canada",away:"Qatar",date:"Jun 18"},
-  {id:"B5",g:"B",home:"Bosnia and Herzegovina",away:"Qatar",date:"Jun 24"},
-  {id:"B6",g:"B",home:"Switzerland",away:"Canada",date:"Jun 24"},
   {id:"C1",g:"C",home:"Brazil",away:"Morocco",date:"Jun 13"},
   {id:"C2",g:"C",home:"Haiti",away:"Scotland",date:"Jun 13"},
-  {id:"C3",g:"C",home:"Scotland",away:"Morocco",date:"Jun 19"},
-  {id:"C4",g:"C",home:"Brazil",away:"Haiti",date:"Jun 19"},
-  {id:"C5",g:"C",home:"Morocco",away:"Haiti",date:"Jun 24"},
-  {id:"C6",g:"C",home:"Scotland",away:"Brazil",date:"Jun 24"},
-  {id:"D1",g:"D",home:"USA",away:"Paraguay",date:"Jun 12"},
-  {id:"D2",g:"D",home:"Australia",away:"Türkiye",date:"Jun 13"},
-  {id:"D3",g:"D",home:"USA",away:"Australia",date:"Jun 19"},
-  {id:"D4",g:"D",home:"Türkiye",away:"Paraguay",date:"Jun 19"},
-  {id:"D5",g:"D",home:"Türkiye",away:"USA",date:"Jun 25"},
-  {id:"D6",g:"D",home:"Paraguay",away:"Australia",date:"Jun 25"},
+  // Jun 14
   {id:"E1",g:"E",home:"Germany",away:"Curaçao",date:"Jun 14"},
-  {id:"E2",g:"E",home:"Ivory Coast",away:"Ecuador",date:"Jun 14"},
-  {id:"E3",g:"E",home:"Germany",away:"Ivory Coast",date:"Jun 20"},
-  {id:"E4",g:"E",home:"Ecuador",away:"Curaçao",date:"Jun 20"},
-  {id:"E5",g:"E",home:"Curaçao",away:"Ivory Coast",date:"Jun 25"},
-  {id:"E6",g:"E",home:"Ecuador",away:"Germany",date:"Jun 25"},
   {id:"F1",g:"F",home:"Netherlands",away:"Japan",date:"Jun 14"},
-  {id:"F2",g:"F",home:"Sweden",away:"Tunisia",date:"Jun 15"},
-  {id:"F3",g:"F",home:"Netherlands",away:"Sweden",date:"Jun 20"},
-  {id:"F4",g:"F",home:"Tunisia",away:"Japan",date:"Jun 20"},
-  {id:"F5",g:"F",home:"Japan",away:"Sweden",date:"Jun 26"},
-  {id:"F6",g:"F",home:"Tunisia",away:"Netherlands",date:"Jun 26"},
-  {id:"G1",g:"G",home:"Belgium",away:"Egypt",date:"Jun 15"},
-  {id:"G2",g:"G",home:"Iran",away:"New Zealand",date:"Jun 15"},
-  {id:"G3",g:"G",home:"Belgium",away:"Iran",date:"Jun 21"},
-  {id:"G4",g:"G",home:"New Zealand",away:"Egypt",date:"Jun 21"},
-  {id:"G5",g:"G",home:"Egypt",away:"Iran",date:"Jun 26"},
-  {id:"G6",g:"G",home:"New Zealand",away:"Belgium",date:"Jun 26"},
+  {id:"E2",g:"E",home:"Ivory Coast",away:"Ecuador",date:"Jun 14"},
+  {id:"F2",g:"F",home:"Sweden",away:"Tunisia",date:"Jun 14"},
+  // Jun 15
   {id:"H1",g:"H",home:"Spain",away:"Cape Verde",date:"Jun 15"},
+  {id:"G1",g:"G",home:"Belgium",away:"Egypt",date:"Jun 15"},
   {id:"H2",g:"H",home:"Saudi Arabia",away:"Uruguay",date:"Jun 15"},
-  {id:"H3",g:"H",home:"Spain",away:"Saudi Arabia",date:"Jun 21"},
-  {id:"H4",g:"H",home:"Uruguay",away:"Cape Verde",date:"Jun 21"},
-  {id:"H5",g:"H",home:"Cape Verde",away:"Saudi Arabia",date:"Jun 26"},
-  {id:"H6",g:"H",home:"Uruguay",away:"Spain",date:"Jun 26"},
+  {id:"G2",g:"G",home:"Iran",away:"New Zealand",date:"Jun 15"},
+  // Jun 16
   {id:"I1",g:"I",home:"France",away:"Senegal",date:"Jun 16"},
   {id:"I2",g:"I",home:"Iraq",away:"Norway",date:"Jun 16"},
-  {id:"I3",g:"I",home:"France",away:"Iraq",date:"Jun 22"},
-  {id:"I4",g:"I",home:"Norway",away:"Senegal",date:"Jun 22"},
-  {id:"I5",g:"I",home:"Senegal",away:"Iraq",date:"Jun 26"},
-  {id:"I6",g:"I",home:"Norway",away:"France",date:"Jun 26"},
   {id:"J1",g:"J",home:"Argentina",away:"Algeria",date:"Jun 16"},
   {id:"J2",g:"J",home:"Austria",away:"Jordan",date:"Jun 16"},
-  {id:"J3",g:"J",home:"Argentina",away:"Austria",date:"Jun 22"},
-  {id:"J4",g:"J",home:"Jordan",away:"Algeria",date:"Jun 22"},
-  {id:"J5",g:"J",home:"Algeria",away:"Austria",date:"Jun 27"},
-  {id:"J6",g:"J",home:"Jordan",away:"Argentina",date:"Jun 27"},
+  // Jun 17
   {id:"K1",g:"K",home:"Portugal",away:"DR Congo",date:"Jun 17"},
-  {id:"K2",g:"K",home:"Uzbekistan",away:"Colombia",date:"Jun 17"},
-  {id:"K3",g:"K",home:"Portugal",away:"Uzbekistan",date:"Jun 23"},
-  {id:"K4",g:"K",home:"Colombia",away:"DR Congo",date:"Jun 23"},
-  {id:"K5",g:"K",home:"DR Congo",away:"Uzbekistan",date:"Jun 27"},
-  {id:"K6",g:"K",home:"Colombia",away:"Portugal",date:"Jun 27"},
   {id:"L1",g:"L",home:"England",away:"Croatia",date:"Jun 17"},
   {id:"L2",g:"L",home:"Ghana",away:"Panama",date:"Jun 17"},
+  {id:"K2",g:"K",home:"Uzbekistan",away:"Colombia",date:"Jun 17"},
+  // Jun 18
+  {id:"A3",g:"A",home:"Czechia",away:"South Africa",date:"Jun 18"},
+  {id:"B3",g:"B",home:"Switzerland",away:"Bosnia and Herzegovina",date:"Jun 18"},
+  {id:"A4",g:"A",home:"Mexico",away:"South Korea",date:"Jun 18"},
+  {id:"B4",g:"B",home:"Canada",away:"Qatar",date:"Jun 18"},
+  // Jun 19
+  {id:"C3",g:"C",home:"Scotland",away:"Morocco",date:"Jun 19"},
+  {id:"D3",g:"D",home:"USA",away:"Australia",date:"Jun 19"},
+  {id:"C4",g:"C",home:"Brazil",away:"Haiti",date:"Jun 19"},
+  {id:"D4",g:"D",home:"Türkiye",away:"Paraguay",date:"Jun 19"},
+  // Jun 20
+  {id:"F3",g:"F",home:"Netherlands",away:"Sweden",date:"Jun 20"},
+  {id:"E3",g:"E",home:"Germany",away:"Ivory Coast",date:"Jun 20"},
+  {id:"E4",g:"E",home:"Ecuador",away:"Curaçao",date:"Jun 20"},
+  {id:"F4",g:"F",home:"Tunisia",away:"Japan",date:"Jun 20"},
+  // Jun 21
+  {id:"H3",g:"H",home:"Spain",away:"Saudi Arabia",date:"Jun 21"},
+  {id:"G3",g:"G",home:"Belgium",away:"Iran",date:"Jun 21"},
+  {id:"H4",g:"H",home:"Uruguay",away:"Cape Verde",date:"Jun 21"},
+  {id:"G4",g:"G",home:"New Zealand",away:"Egypt",date:"Jun 21"},
+  // Jun 22
+  {id:"I3",g:"I",home:"France",away:"Iraq",date:"Jun 22"},
+  {id:"J3",g:"J",home:"Argentina",away:"Austria",date:"Jun 22"},
+  {id:"I4",g:"I",home:"Norway",away:"Senegal",date:"Jun 22"},
+  {id:"J4",g:"J",home:"Jordan",away:"Algeria",date:"Jun 22"},
+  // Jun 23
+  {id:"K3",g:"K",home:"Portugal",away:"Uzbekistan",date:"Jun 23"},
   {id:"L3",g:"L",home:"England",away:"Ghana",date:"Jun 23"},
   {id:"L4",g:"L",home:"Panama",away:"Croatia",date:"Jun 23"},
+  {id:"K4",g:"K",home:"Colombia",away:"DR Congo",date:"Jun 23"},
+  // Jun 24 (MD3 simultaneous)
+  {id:"A5",g:"A",home:"Czechia",away:"Mexico",date:"Jun 24"},
+  {id:"A6",g:"A",home:"South Africa",away:"South Korea",date:"Jun 24"},
+  {id:"B5",g:"B",home:"Bosnia and Herzegovina",away:"Qatar",date:"Jun 24"},
+  {id:"B6",g:"B",home:"Switzerland",away:"Canada",date:"Jun 24"},
+  {id:"C5",g:"C",home:"Morocco",away:"Haiti",date:"Jun 24"},
+  {id:"C6",g:"C",home:"Scotland",away:"Brazil",date:"Jun 24"},
+  // Jun 25 (MD3 simultaneous)
+  {id:"D5",g:"D",home:"Türkiye",away:"USA",date:"Jun 25"},
+  {id:"D6",g:"D",home:"Paraguay",away:"Australia",date:"Jun 25"},
+  {id:"E5",g:"E",home:"Curaçao",away:"Ivory Coast",date:"Jun 25"},
+  {id:"E6",g:"E",home:"Ecuador",away:"Germany",date:"Jun 25"},
+  {id:"F5",g:"F",home:"Japan",away:"Sweden",date:"Jun 25"},
+  {id:"F6",g:"F",home:"Tunisia",away:"Netherlands",date:"Jun 25"},
+  // Jun 26 (MD3 simultaneous)
+  {id:"G5",g:"G",home:"Egypt",away:"Iran",date:"Jun 26"},
+  {id:"G6",g:"G",home:"New Zealand",away:"Belgium",date:"Jun 26"},
+  {id:"H5",g:"H",home:"Cape Verde",away:"Saudi Arabia",date:"Jun 26"},
+  {id:"H6",g:"H",home:"Uruguay",away:"Spain",date:"Jun 26"},
+  {id:"I5",g:"I",home:"Senegal",away:"Iraq",date:"Jun 26"},
+  {id:"I6",g:"I",home:"Norway",away:"France",date:"Jun 26"},
+  // Jun 27 (MD3 simultaneous)
+  {id:"J5",g:"J",home:"Algeria",away:"Austria",date:"Jun 27"},
+  {id:"J6",g:"J",home:"Jordan",away:"Argentina",date:"Jun 27"},
+  {id:"K5",g:"K",home:"DR Congo",away:"Uzbekistan",date:"Jun 27"},
+  {id:"K6",g:"K",home:"Colombia",away:"Portugal",date:"Jun 27"},
   {id:"L5",g:"L",home:"Croatia",away:"Ghana",date:"Jun 27"},
   {id:"L6",g:"L",home:"Panama",away:"England",date:"Jun 27"},
 ];
@@ -601,29 +618,35 @@ function pickBtn(team,pickVal,gameId,isKo){
 function renderGroupPicks(){
   const container=document.getElementById("group-picks-container");
   const locked=groupLocked(); const player=currentPlayer;
-  const groups=["A","B","C","D","E","F","G","H","I","J","K","L"];
-  container.innerHTML=groups.map(grp=>{
-    const games=GROUP_GAMES.filter(g=>g.g===grp);
-    return `<div class="group-header">Group ${grp}</div>${games.map(g=>{
+  // Group by date chronologically (order preserved from GROUP_GAMES array)
+  const byDate={};
+  GROUP_GAMES.forEach(g=>{
+    if(!byDate[g.date]) byDate[g.date]=[];
+    byDate[g.date].push(g);
+  });
+  const dates=[...new Set(GROUP_GAMES.map(g=>g.date))]; // preserves insertion order
+  container.innerHTML=dates.map(date=>{
+    const games=byDate[date];
+    return `<div class="group-header">${date}</div>${games.map(g=>{
       const pick=player.groupPicks?.[g.id];
       const r=results.group?.[g.id];
       const ml=r?.moneyline||{};
-      // Translate stored result to team name / "draw" for comparison with pick
       const resultVal=r?.result==="home"?g.home:r?.result==="away"?g.away:r?.result==="draw"?"draw":null;
       const correct=resultVal&&pick===resultVal;
-      // Build odds line — show all three if any are set
       const hasOdds=ml.home||ml.draw||ml.away;
       const oddsLine=hasOdds?`<small style="display:flex;gap:10px;margin-top:3px">
         <span style="color:var(--text2)">${g.home}: <span style="color:var(--gold);font-family:var(--font-m)">${ml.home||"—"}</span></span>
         <span style="color:var(--text2)">Draw: <span style="color:var(--gold);font-family:var(--font-m)">${ml.draw||"—"}</span></span>
         <span style="color:var(--text2)">${g.away}: <span style="color:var(--gold);font-family:var(--font-m)">${ml.away||"—"}</span></span>
       </small>`:"";
+      // Label includes group tag for context
+      const grpTag=`<span style="font-size:10px;color:var(--text3);font-family:var(--font-m);margin-left:4px">GRP ${g.g}</span>`;
       if(resultVal){
         const lbl=resultVal==="draw"?"Draw":resultVal;
         const pts=resultVal==="draw"?2:1+(r.isUpset?1:0);
         return `<div class="game-row">
-          <div class="game-date">${g.date}</div>
-          <div class="game-matchup">${g.home} vs ${g.away}
+          <div class="game-date">${g.id}</div>
+          <div class="game-matchup">${g.home} vs ${g.away}${grpTag}
             <small>${lbl}${r.isUpset?' <span class="badge badge-gold">UPSET</span>':''}</small>
             ${oddsLine}
           </div>
@@ -631,13 +654,13 @@ function renderGroupPicks(){
         </div>`;
       }
       if(locked) return `<div class="game-row">
-        <div class="game-date">${g.date}</div>
-        <div class="game-matchup">${g.home} vs ${g.away}${oddsLine}</div>
+        <div class="game-date">${g.id}</div>
+        <div class="game-matchup">${g.home} vs ${g.away}${grpTag}${oddsLine}</div>
         <div class="text-muted text-sm">${pick==="draw"?"Draw":pick||"—"}</div>
       </div>`;
       return `<div class="game-row" style="grid-template-columns:44px 1fr auto">
-        <div class="game-date">${g.date}</div>
-        <div class="game-matchup">${g.home} vs ${g.away}${oddsLine}</div>
+        <div class="game-date">${g.id}</div>
+        <div class="game-matchup">${g.home} vs ${g.away}${grpTag}${oddsLine}</div>
         <div class="pick-group">
           ${pickBtn(g.home,pick,g.id,false)}
           <button class="pick-btn draw-btn ${pick==="draw"?"selected":""}" onclick="makePick('${g.id}','draw')">Draw</button>
@@ -735,18 +758,28 @@ function renderPickSheets(){
         <div style="color:var(--text3);margin-left:8px;font-size:12px">▾</div>
       </div>
       <div class="accordion-body" id="acc-${p.id}">
-        ${GROUP_GAMES.map(g=>{
-          const pick=p.groupPicks?.[g.id]; const r=results.group?.[g.id];
-          const resultVal=r?.result==="home"?g.home:r?.result==="away"?g.away:r?.result==="draw"?"draw":null;
-          const correct=resultVal&&pick===resultVal;
-          const lbl=pick==="draw"?"Draw":pick||"—";
-          return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">
-            <span class="text-mono" style="color:var(--text3);width:28px">${g.id}</span>
-            <span class="text-muted" style="flex:1">${g.home} vs ${g.away}</span>
-            <span style="color:${pick?"var(--text)":"var(--text3)"}">${lbl}</span>
-            ${resultVal?`<span style="color:${correct?"var(--green)":"var(--red)"};width:16px;text-align:right">${correct?"✓":"✗"}</span>`:""}
-          </div>`;
-        }).join("")}
+        ${(()=>{
+          const byDate={};
+          GROUP_GAMES.forEach(g=>{if(!byDate[g.date])byDate[g.date]=[];byDate[g.date].push(g);});
+          const dates=[...new Set(GROUP_GAMES.map(g=>g.date))];
+          return dates.map(date=>{
+            const games=byDate[date];
+            return `<div style="font-size:10px;color:var(--text3);font-family:var(--font-m);padding:6px 0 2px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">${date}</div>`+
+            games.map(g=>{
+              const pick=p.groupPicks?.[g.id]; const r=results.group?.[g.id];
+              const resultVal=r?.result==="home"?g.home:r?.result==="away"?g.away:r?.result==="draw"?"draw":null;
+              const correct=resultVal&&pick===resultVal;
+              const lbl=pick==="draw"?"Draw":pick||"—";
+              return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px">
+                <span class="text-mono" style="color:var(--text3);width:28px">${g.id}</span>
+                <span style="color:var(--text3);font-size:10px;width:16px">${g.g}</span>
+                <span class="text-muted" style="flex:1">${g.home} vs ${g.away}</span>
+                <span style="color:${pick?"var(--text)":"var(--text3)"}">${lbl}</span>
+                ${resultVal?`<span style="color:${correct?"var(--green)":"var(--red)"};width:16px;text-align:right">${correct?"✓":"✗"}</span>`:""}
+              </div>`;
+            }).join("");
+          }).join("");
+        })()}
         ${KO_SLOTS.filter(s=>results.ko?.[s.id]?.teamA||p.koPicks?.[s.id]).map(s=>{
           const pick=p.koPicks?.[s.id]; const r=results.ko?.[s.id];
           const correct=r&&pick===r.winner;
@@ -850,14 +883,17 @@ function renderAdminPickGroup(){
   if(!adminPickingFor) return;
   const p=adminPickingFor;
   const container=document.getElementById("admin-pick-group-container");
-  const groups=["A","B","C","D","E","F","G","H","I","J","K","L"];
-  container.innerHTML=groups.map(grp=>`
-    <div class="group-header" style="margin-top:8px">Group ${grp}</div>
-    ${GROUP_GAMES.filter(g=>g.g===grp).map(g=>{
+  const byDate={};
+  GROUP_GAMES.forEach(g=>{if(!byDate[g.date])byDate[g.date]=[];byDate[g.date].push(g);});
+  const dates=[...new Set(GROUP_GAMES.map(g=>g.date))];
+  container.innerHTML=dates.map(date=>`
+    <div class="group-header" style="margin-top:8px">${date}</div>
+    ${byDate[date].map(g=>{
       const pick=p.groupPicks?.[g.id];
       const r=results.group?.[g.id];
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
         <span class="text-mono" style="color:var(--text3);font-size:11px;width:28px">${g.id}</span>
+        <span style="font-size:10px;color:var(--text3);background:var(--surface3);padding:1px 5px;border-radius:3px;font-family:var(--font-m)">GRP ${g.g}</span>
         <span style="flex:1;font-size:13px">${g.home} vs ${g.away}</span>
         <select class="result-select" onchange="adminSetGroupPick('${g.id}',this.value)">
           <option value="">— pick —</option>
@@ -917,17 +953,19 @@ window.adminSetKoPick=async function(slotId,value){
 
 function renderAdminGroup(){
   const container=document.getElementById("admin-group-container");
-  const groups=["A","B","C","D","E","F","G","H","I","J","K","L"];
-  container.innerHTML=groups.map(grp=>`
-    <div class="group-header" style="margin-top:8px">Group ${grp}</div>
-    ${GROUP_GAMES.filter(g=>g.g===grp).map(g=>{
+  const byDate={};
+  GROUP_GAMES.forEach(g=>{if(!byDate[g.date])byDate[g.date]=[];byDate[g.date].push(g);});
+  const dates=[...new Set(GROUP_GAMES.map(g=>g.date))];
+  container.innerHTML=dates.map(date=>`
+    <div class="group-header" style="margin-top:8px">${date}</div>
+    ${byDate[date].map(g=>{
       const r=results.group?.[g.id]||{};
       const ml=r.moneyline||{};
       return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
           <span class="text-mono" style="color:var(--text3);font-size:11px;width:28px">${g.id}</span>
+          <span style="font-size:10px;color:var(--text3);background:var(--surface3);padding:1px 5px;border-radius:3px;font-family:var(--font-m)">GRP ${g.g}</span>
           <span style="flex:1;font-size:13px;font-weight:500">${g.home} vs ${g.away}</span>
-          <span style="font-size:11px;color:var(--text3)">${g.date}</span>
           ${r.result?`<span class="badge badge-green">${r.result==="draw"?"Draw":r.result==="home"?g.home:g.away}</span>`:""}
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding-left:36px;margin-bottom:8px">
