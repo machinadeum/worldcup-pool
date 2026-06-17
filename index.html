@@ -71,6 +71,23 @@
   .lb-rank.bronze{color:#cd7f32;font-weight:700;}
   .lb-total{font-family:var(--font-m);font-size:16px;font-weight:500;color:var(--green);text-align:right;}
   .lb-round{font-family:var(--font-m);font-size:12px;color:var(--text2);text-align:right;}
+  /* Grid view */
+  .grid-scroll{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);}
+  .grid-table{border-collapse:collapse;font-size:12px;}
+  .grid-table th,.grid-table td{padding:0;border:1px solid var(--border);}
+  .grid-table .grid-corner{position:sticky;left:0;z-index:3;background:var(--surface2);min-width:140px;padding:8px 10px;text-align:left;font-family:var(--font-m);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
+  .grid-table .grid-date-header{position:sticky;left:0;z-index:3;background:var(--surface3);padding:5px 10px;font-family:var(--font-m);font-size:10px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+  .grid-table .grid-player-th{min-width:70px;padding:8px 6px;background:var(--surface2);text-align:center;font-weight:500;font-size:11px;white-space:nowrap;}
+  .grid-table .grid-game-label{position:sticky;left:0;z-index:2;background:var(--surface);min-width:140px;padding:6px 10px;white-space:nowrap;}
+  .grid-table .grid-game-label .gid{font-family:var(--font-m);color:var(--text3);font-size:10px;margin-right:6px;}
+  .grid-table .grid-cell{min-width:70px;text-align:center;padding:4px;}
+  .grid-table .grid-cell .pick-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 6px;border-radius:5px;font-family:var(--font-m);font-size:11px;font-weight:500;background:var(--surface2);color:var(--text2);}
+  .grid-table .grid-cell .pick-pill img{width:16px;height:11px;border-radius:1px;display:block;}
+  .grid-table .grid-cell.correct .pick-pill{background:rgba(0,200,83,.18);color:var(--green);}
+  .grid-table .grid-cell.wrong .pick-pill{background:rgba(255,61,61,.12);color:var(--red);}
+  .grid-table .grid-cell.empty{color:var(--text3);font-size:11px;}
+  .grid-legend{display:flex;gap:16px;align-items:center;margin-top:10px;font-size:11px;color:var(--text2);}
+  .grid-legend .dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle;}
   /* Admin */
   .result-select{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--font-b);font-size:12px;padding:6px 8px;outline:none;cursor:pointer;}
   .result-select:focus{border-color:var(--green);}
@@ -190,6 +207,7 @@
   <div class="tabs">
     <button class="tab-btn active" onclick="switchLbTab('standings',this)">Standings</button>
     <button class="tab-btn" onclick="switchLbTab('picksheets',this)">Pick Sheets</button>
+    <button class="tab-btn" onclick="switchLbTab('grid',this)">Grid View</button>
   </div>
   <div id="lb-tab-standings">
     <div class="card" style="padding:0;overflow:hidden">
@@ -203,6 +221,10 @@
   <div id="lb-tab-picksheets" style="display:none">
     <div id="picks-hidden-notice" class="locked-bar">🔒 Pick sheets will be visible once the admin opens them after kickoff on June 11</div>
     <div id="picksheets-container"></div>
+  </div>
+  <div id="lb-tab-grid" style="display:none">
+    <div id="grid-hidden-notice" class="locked-bar">🔒 The grid will be visible once the admin opens picks after kickoff on June 11</div>
+    <div id="grid-container"></div>
   </div>
 </div>
 
@@ -296,6 +318,13 @@ const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
 const ADMIN_PASSWORD = "Land226Blue";
+
+// ── Password hashing (SHA-256, browser-native, no library needed) ──
+async function hashPassword(plain){
+  const enc=new TextEncoder().encode(plain.toLowerCase().trim());
+  const buf=await crypto.subtle.digest("SHA-256",enc);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
 const GROUP_DEADLINE = new Date("2026-06-11T19:00:00Z");
 const KO_DEADLINE    = new Date("2026-06-28T12:00:00Z");
 
@@ -508,9 +537,11 @@ window.switchPickTab=function(tab,btn){
 window.switchLbTab=function(tab,btn){
   document.getElementById("lb-tab-standings").style.display=tab==="standings"?"block":"none";
   document.getElementById("lb-tab-picksheets").style.display=tab==="picksheets"?"block":"none";
+  document.getElementById("lb-tab-grid").style.display=tab==="grid"?"block":"none";
   document.querySelectorAll("#page-leaderboard .tab-btn").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
   if(tab==="picksheets") renderPickSheets();
+  if(tab==="grid") renderGridView();
 };
 window.switchAdminTab=function(tab,btn){
   document.querySelectorAll("#admin-tab-group,#admin-tab-ko,#admin-tab-players,#admin-tab-settings")
@@ -543,7 +574,16 @@ window.login=async function(){
   const errEl=document.getElementById("login-error"); errEl.textContent="";
   const found=allPlayers.find(p=>p.name.toLowerCase()===name.toLowerCase());
   if(!found){errEl.textContent="No player found with that name.";return;}
-  if(found.password.toLowerCase()!==pw.toLowerCase()){errEl.textContent="Incorrect password. Ask the admin if you've forgotten it.";return;}
+  const enteredHash=await hashPassword(pw);
+  // Support legacy plaintext passwords during transition (one-time auto-upgrade)
+  if(found.password && !found.passwordHash){
+    if(found.password.toLowerCase()!==pw.toLowerCase()){errEl.textContent="Incorrect password. Ask the admin if you've forgotten it.";return;}
+    // Upgrade this player to hashed storage now that they've proven they know it
+    await updateDoc(doc(db,"players",found.id),{passwordHash:enteredHash,password:null});
+    found.passwordHash=enteredHash; found.password=null;
+  } else if(found.passwordHash!==enteredHash){
+    errEl.textContent="Incorrect password. Ask the admin if you've forgotten it.";return;
+  }
   currentPlayer=found; localStorage.setItem("wc_player",JSON.stringify(currentPlayer));
   updateHeaderPlayer();
   document.getElementById("login-name").value=""; document.getElementById("login-pw").value="";
@@ -571,6 +611,7 @@ function refreshAll(){
   renderRegisterPage(); updateHeaderPlayer();
   if(document.getElementById("page-picks").classList.contains("active")) renderPicks();
   if(document.getElementById("page-leaderboard").classList.contains("active")) renderLeaderboard();
+  if(document.getElementById("lb-tab-grid").style.display==="block") renderGridView();
   if(adminAuthed&&document.getElementById("page-admin").classList.contains("active")) renderAdmin();
 }
 
@@ -764,36 +805,97 @@ function renderPickSheets(){
           const dates=[...new Set(GROUP_GAMES.map(g=>g.date))];
           return dates.map(date=>{
             const games=byDate[date];
-            return `<div style="font-size:10px;color:var(--text3);font-family:var(--font-m);padding:6px 0 2px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">${date}</div>`+
+            return '<div style="font-size:10px;color:var(--text3);font-family:var(--font-m);padding:6px 0 2px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">'+date+'</div>'+
             games.map(g=>{
               const pick=p.groupPicks?.[g.id]; const r=results.group?.[g.id];
               const resultVal=r?.result==="home"?g.home:r?.result==="away"?g.away:r?.result==="draw"?"draw":null;
               const correct=resultVal&&pick===resultVal;
               const lbl=pick==="draw"?"Draw":pick||"—";
+              const textCol=pick?'var(--text)':'var(--text3)';
+              const checkHtml=resultVal?('<span style="color:'+(correct?'var(--green)':'var(--red)')+';width:16px;text-align:right">'+(correct?'✓':'✗')+'</span>'):'';
               return `<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px">
                 <span class="text-mono" style="color:var(--text3);width:28px">${g.id}</span>
                 <span style="color:var(--text3);font-size:10px;width:16px">${g.g}</span>
                 <span class="text-muted" style="flex:1">${g.home} vs ${g.away}</span>
-                <span style="color:${pick?"var(--text)":"var(--text3)"}">${lbl}</span>
-                ${resultVal?`<span style="color:${correct?"var(--green)":"var(--red)"};width:16px;text-align:right">${correct?"✓":"✗"}</span>`:""}
+                <span style="color:${textCol}">${lbl}</span>
+                ${checkHtml}
               </div>`;
-            }).join("");
-          }).join("");
+            }).join('');
+          }).join('');
         })()}
         ${KO_SLOTS.filter(s=>results.ko?.[s.id]?.teamA||p.koPicks?.[s.id]).map(s=>{
           const pick=p.koPicks?.[s.id]; const r=results.ko?.[s.id];
           const correct=r&&pick===r.winner;
+          const pickCol=pick?'var(--text)':'var(--text3)';
+          const koCheckHtml=r?.winner?('<span style="color:'+(correct?'var(--green)':'var(--red)')+';width:16px;text-align:right">'+(correct?'✓':'✗')+'</span>'):'';
           return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">
             <span class="text-mono" style="color:var(--text3);width:28px">${s.id}</span>
             <span class="text-muted" style="flex:1">${KO_LABELS[s.round]}</span>
-            <span style="color:${pick?"var(--text)":"var(--text3)"}">${pick||"—"}</span>
-            ${r?.winner?`<span style="color:${correct?"var(--green)":"var(--red)"};width:16px;text-align:right">${correct?"✓":"✗"}</span>`:""}
+            <span style="color:${pickCol}">${pick||"—"}</span>
+            ${koCheckHtml}
           </div>`;
         }).join("")}
       </div>
     </div>`).join("");
 }
 window.toggleAccordion=function(id){document.getElementById(id).classList.toggle("open");};
+
+// ── Grid view: all players' group picks side by side ──────────
+function renderGridView(){
+  document.getElementById("grid-hidden-notice").style.display=picksVisible?"none":"block";
+  const container=document.getElementById("grid-container");
+  if(!picksVisible){container.innerHTML="";return;}
+  if(!allPlayers.length){container.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)">No participants yet</div>`;return;}
+
+  // Sort players alphabetically for stable column order
+  const players=[...allPlayers].sort((a,b)=>a.name.localeCompare(b.name));
+
+  // Group games by date for row sectioning (chronological, matches picks page)
+  const byDate={};
+  GROUP_GAMES.forEach(g=>{if(!byDate[g.date])byDate[g.date]=[];byDate[g.date].push(g);});
+  const dates=[...new Set(GROUP_GAMES.map(g=>g.date))];
+
+  let rows="";
+  dates.forEach(date=>{
+    rows+=`<tr><td class="grid-date-header">${date}</td>`+players.map(()=>`<td style="background:var(--surface3)"></td>`).join("")+`</tr>`;
+    byDate[date].forEach(g=>{
+      const r=results.group?.[g.id];
+      const resultVal=r?.result==="home"?g.home:r?.result==="away"?g.away:r?.result==="draw"?"draw":null;
+      rows+=`<tr><td class="grid-game-label"><span class="gid">${g.id}</span>${g.home} v ${g.away}</td>`;
+      rows+=players.map(p=>{
+        const pick=p.groupPicks?.[g.id];
+        if(!pick) return `<td class="grid-cell empty">—</td>`;
+        const correct=resultVal&&pick===resultVal;
+        const cellClass=resultVal?(correct?"correct":"wrong"):"";
+        let pillContent;
+        if(pick==="draw"){
+          pillContent=`<span class="code">DRAW</span>`;
+        } else {
+          const t=tf(pick);
+          pillContent=flagImg(t.iso2)+`<span class="code">${t.code}</span>`;
+        }
+        return `<td class="grid-cell ${cellClass}"><span class="pick-pill">${pillContent}</span></td>`;
+      }).join("");
+      rows+=`</tr>`;
+    });
+  });
+
+  const header=`<tr><th class="grid-corner">Game</th>`+
+    players.map(p=>`<th class="grid-player-th">${p.name}</th>`).join("")+`</tr>`;
+
+  container.innerHTML=`
+    <div class="grid-scroll">
+      <table class="grid-table">
+        <thead>${header}</thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="grid-legend">
+      <span><span class="dot" style="background:rgba(0,200,83,.35)"></span>Correct pick</span>
+      <span><span class="dot" style="background:rgba(255,61,61,.25)"></span>Incorrect pick</span>
+      <span><span class="dot" style="background:var(--surface2)"></span>Result pending</span>
+    </div>`;
+}
 
 // ── Admin ─────────────────────────────────────────────────────
 window.adminLogin=function(){
@@ -828,12 +930,13 @@ window.adminCreatePlayer=async function(){
   if(allPlayers.find(p=>p.name.toLowerCase()===name.toLowerCase())){errEl.textContent="Name already taken.";return;}
   const pw=generatePassword();
   const id=name.toLowerCase().replace(/\s+/g,"_")+"_"+Date.now();
-  const player={name,email,password:pw,groupPicks:{},koPicks:{},createdAt:new Date().toISOString()};
+  const pwHash=await hashPassword(pw);
+  const player={name,email,passwordHash:pwHash,groupPicks:{},koPicks:{},createdAt:new Date().toISOString()};
   await setDoc(doc(db,"players",id),player);
   document.getElementById("admin-new-name").value="";
   document.getElementById("admin-new-email").value="";
   const pwEl=document.getElementById("admin-new-pw-display");
-  pwEl.textContent=`✓ ${name} created · password: ${pw}`;
+  pwEl.textContent=`✓ ${name} created · password: ${pw} (write this down — it won't be shown again)`;
   pwEl.style.display="block";
   showAdminMsg(`Player "${name}" created with password: ${pw}`);
 };
@@ -1036,12 +1139,23 @@ function renderAdminPlayers(){
       <div style="flex:1">
         <div style="font-weight:500">${p.name}</div>
         <div class="text-sm text-muted">${p.email}</div>
-        <div style="font-family:var(--font-m);font-size:11px;color:var(--gold);margin-top:2px">🔑 ${p.password||"—"}</div>
+        <div id="reset-display-${p.id}" style="font-family:var(--font-m);font-size:11px;color:var(--gold);margin-top:2px;display:none"></div>
       </div>
       <span class="text-mono text-muted" style="font-size:11px">${Object.keys(p.groupPicks||{}).length}/72</span>
+      <button class="btn btn-ghost btn-sm" onclick="resetPlayerPassword('${p.id}','${p.name}')">Reset password</button>
       <button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:var(--red)" onclick="removePlayer('${p.id}','${p.name}')">Remove</button>
     </div>`).join("");
 }
+
+window.resetPlayerPassword=async function(id,name){
+  if(!confirm(`Generate a new password for ${name}? Their old password will stop working immediately.`)) return;
+  const newPw=generatePassword();
+  const newHash=await hashPassword(newPw);
+  await updateDoc(doc(db,"players",id),{passwordHash:newHash,password:null});
+  const el=document.getElementById(`reset-display-${id}`);
+  if(el){el.textContent=`🔑 New password: ${newPw}`; el.style.display="block";}
+  showAdminMsg(`${name}'s new password: ${newPw} — share this with them now, it won't be shown again`);
+};
 
 window.saveGroupResult=async function(gameId,home,away){
   const result=document.getElementById(`res-${gameId}`).value;
