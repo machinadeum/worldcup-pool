@@ -762,12 +762,19 @@ window.makeKoPick=async function(slotId,value){
 // ── Leaderboard ───────────────────────────────────────────────
 function renderLeaderboard(){
   const scored=allPlayers.map(p=>({...p,...calcPoints(p)})).sort((a,b)=>b.total-a.total);
-  const rc=i=>i===0?"gold":i===1?"silver":i===2?"bronze":"";
+  // Standard competition ranking: ties share the same rank, next rank skips ahead
+  // e.g. two players tied at the top are both #1, next player is #3
+  let rank=0;
+  scored.forEach((p,i)=>{
+    if(i===0||p.total<scored[i-1].total) rank=i+1;
+    p.rank=rank;
+  });
+  const rc=r=>r===1?"gold":r===2?"silver":r===3?"bronze":"";
   const tbody=document.getElementById("lb-standings-body");
   if(!scored.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text3)">No participants yet</td></tr>`;return;}
-  tbody.innerHTML=scored.map((p,i)=>`
+  tbody.innerHTML=scored.map(p=>`
     <tr class="${currentPlayer?.id===p.id?"me":""}">
-      <td class="lb-rank ${rc(i)}">${i+1}</td>
+      <td class="lb-rank ${rc(p.rank)}">${p.rank}</td>
       <td><div class="flex" style="gap:8px">
         <div style="${avatarStyle(p.name)};border-radius:50%;width:24px;height:24px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">${initials(p.name)}</div>
         <span style="font-weight:500">${p.name}</span>
