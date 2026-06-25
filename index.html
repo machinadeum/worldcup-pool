@@ -479,6 +479,30 @@ const KO_SLOTS = [
 ];
 const KO_LABELS = {R32:"Round of 32",R16:"Round of 16",QF:"Quarterfinals",SF:"Semifinals",F:"Final"};
 
+// Bracket advancement: which two prior-round slots feed into each next-round slot.
+// Winner of slot[0] becomes teamA, winner of slot[1] becomes teamB, in the target slot.
+const KO_ADVANCE = {
+  "R16_1":["R32_1","R32_2"], "R16_2":["R32_3","R32_4"],
+  "R16_3":["R32_5","R32_6"], "R16_4":["R32_7","R32_8"],
+  "R16_5":["R32_9","R32_10"], "R16_6":["R32_11","R32_12"],
+  "R16_7":["R32_13","R32_14"], "R16_8":["R32_15","R32_16"],
+  "QF_1":["R16_1","R16_2"], "QF_2":["R16_3","R16_4"],
+  "QF_3":["R16_5","R16_6"], "QF_4":["R16_7","R16_8"],
+  "SF_1":["QF_1","QF_2"], "SF_2":["QF_3","QF_4"],
+  "F_1":["SF_1","SF_2"],
+};
+
+// Given current results.ko, return {teamA, teamB} for a slot by pulling winners
+// from its feeder slots (falls back to admin-entered/hardcoded teamA/teamB if no feeders apply)
+function getAdvancedTeams(slotId, resultsKo){
+  const feeders=KO_ADVANCE[slotId];
+  if(!feeders) return null;
+  const [aId,bId]=feeders;
+  const winA=resultsKo?.[aId]?.winner||"";
+  const winB=resultsKo?.[bId]?.winner||"";
+  return {teamA:winA,teamB:winB};
+}
+
 
 const AVATAR_COLORS=["#1a3a2a","#2a1a3a","#3a2a1a","#1a2a3a","#3a1a2a","#1a3a3a"];
 const AVATAR_TEXT  =["#00C853","#a78bfa","#FFD600","#38bdf8","#f472b6","#34d399"];
@@ -725,6 +749,41 @@ function renderGroupPicks(){
   }).join("");
 }
 
+// Get the two teams that SHOULD appear in a given KO slot for a specific player,
+// based on that player's own picks cascading up from R32 (their personal bracket).
+// Falls back to the slot's hardcoded/admin-set teams only for R32 (the only round
+// with real teams known in advance).
+function getPlayerBracketTeams(slotId, player){
+  const feeders=KO_ADVANCE[slotId];
+  if(!feeders){
+    // R32 slot: real teams, no derivation needed
+    const s=KO_SLOTS.find(x=>x.id===slotId);
+    const r=results.ko?.[slotId];
+    return {teamA:r?.teamA||s?.teamA||"",teamB:r?.teamB||s?.teamB||""};
+  }
+  const [aId,bId]=feeders;
+  const teamA=player.koPicks?.[aId]||"";
+  const teamB=player.koPicks?.[bId]||"";
+  return {teamA,teamB};
+}
+
+// All slot IDs that depend (directly or transitively) on a given slot's pick.
+// Used to clear downstream picks when an earlier pick changes.
+function getDownstreamSlots(slotId){
+  const downstream=[];
+  const queue=[slotId];
+  while(queue.length){
+    const cur=queue.shift();
+    for(const [targetId,feeders] of Object.entries(KO_ADVANCE)){
+      if(feeders.includes(cur)){
+        downstream.push(targetId);
+        queue.push(targetId);
+      }
+    }
+  }
+  return downstream;
+}
+
 function renderKoPicks(){
   const container=document.getElementById("ko-picks-container");
   const locked=koLocked(); const player=currentPlayer;
@@ -734,17 +793,23 @@ function renderKoPicks(){
     return `<div class="group-header">${KO_LABELS[rnd]} · ${slots[0].pts} pts</div>${slots.map(s=>{
       const r=results.ko?.[s.id];
       const pick=player.koPicks?.[s.id];
-      // Fall back to the slot's built-in bracket teams if admin hasn't overridden them
-      const tA=r?.teamA||s.teamA||"TBD";
-      const tB=r?.teamB||s.teamB||"TBD";
-      const correct=r&&pick===r.winner;
+      const bracketTeams=getPlayerBracketTeams(s.id,player);
+      const tA=bracketTeams.teamA||"TBD";
+      const tB=bracketTeams.teamB||"TBD";
+      const correct=r?.winner&&pick===r.winner;
       const dateLabel=s.date?s.date+" · "+s.id:s.id;
+      // If the real result is in, show it as informational, regardless of pick stage
       if(r?.winner) return `<div class="game-row">
         <div class="game-date">${dateLabel}</div>
-        <div class="game-matchup">${tA} vs ${tB}<small>${r.winner} wins${r.isUpset?' <span class="badge badge-gold">UPSET</span>':''}</small></div>
+        <div class="game-matchup">${r.teamA||tA} vs ${r.teamB||tB}<small>${r.winner} wins${r.isUpset?' <span class="badge badge-gold">UPSET</span>':''}</small></div>
         <div class="${correct?"result-correct":"result-wrong"}">${pick?(correct?"✓ +"+(s.pts+(r.isUpset?1:0))+"pts":"✗ 0pts"):"—"}</div>
       </div>`;
-      if(tA==="TBD"||tB==="TBD"||locked) return `<div class="game-row">
+      if(tA==="TBD"||tB==="TBD") return `<div class="game-row">
+        <div class="game-date">${dateLabel}</div>
+        <div class="game-matchup">${tA} vs ${tB}</div>
+        <div class="text-muted text-sm">Pick earlier rounds first</div>
+      </div>`;
+      if(locked) return `<div class="game-row">
         <div class="game-date">${dateLabel}</div>
         <div class="game-matchup">${tA} vs ${tB}</div>
         <div class="text-muted text-sm">${pick||"—"}</div>
@@ -771,6 +836,9 @@ window.makePick=async function(gameId,value){
 window.makeKoPick=async function(slotId,value){
   if(koLocked()||!currentPlayer) return;
   const picks={...(currentPlayer.koPicks||{}),[slotId]:value};
+  // Clear any downstream picks that were based on the OLD value of this slot,
+  // since changing an earlier round invalidates whoever advanced from it.
+  getDownstreamSlots(slotId).forEach(id=>{ if(picks[id]) delete picks[id]; });
   await updateDoc(doc(db,"players",currentPlayer.id),{koPicks:picks});
   currentPlayer.koPicks=picks; localStorage.setItem("wc_player",JSON.stringify(currentPlayer));
   renderKoPicks();
@@ -1041,9 +1109,11 @@ function renderAdminPickKo(){
   container.innerHTML=rounds.map(rnd=>`
     <div class="group-header" style="margin-top:8px">${KO_LABELS[rnd]}</div>
     ${KO_SLOTS.filter(s=>s.round===rnd).map(s=>{
-      const r=results.ko?.[s.id]; const pick=p.koPicks?.[s.id];
-      const tA=r?.teamA||s.teamA||""; const tB=r?.teamB||s.teamB||"";
-      if(!tA&&!tB) return `<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3)">${s.id} — teams TBD</div>`;
+      const pick=p.koPicks?.[s.id];
+      const bracketTeams=getPlayerBracketTeams(s.id,p);
+      const tA=bracketTeams.teamA; const tB=bracketTeams.teamB;
+      const r=results.ko?.[s.id];
+      if(!tA&&!tB) return `<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3)">${s.id} — pick earlier rounds first</div>`;
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
         <span class="text-mono" style="color:var(--text3);font-size:11px;width:44px">${s.id}</span>
         <span style="flex:1;font-size:13px">${tA} vs ${tB}</span>
@@ -1072,10 +1142,13 @@ window.adminSetKoPick=async function(slotId,value){
   if(!adminPickingFor) return;
   const picks={...(adminPickingFor.koPicks||{}),[slotId]:value};
   if(!value){delete picks[slotId];}
+  // Clear downstream picks that depended on this slot's old value
+  getDownstreamSlots(slotId).forEach(id=>{ if(picks[id]) delete picks[id]; });
   await updateDoc(doc(db,"players",adminPickingFor.id),{koPicks:picks});
   adminPickingFor.koPicks=picks;
   const idx=allPlayers.findIndex(p=>p.id===adminPickingFor.id);
   if(idx>=0) allPlayers[idx].koPicks=picks;
+  renderAdminPickKo();
 };
 
 function renderAdminGroup(){
@@ -1208,10 +1281,20 @@ window.saveKoResult=async function(slotId){
   sel.innerHTML=`<option value="">— winner —</option>
     ${teamA?`<option value="${teamA}" ${winner===teamA?"selected":""}>${teamA}</option>`:""}
     ${teamB?`<option value="${teamB}" ${winner===teamB?"selected":""}>${teamB}</option>`:""}`;
-  const cur=results.ko||{};
-  const updated={...cur,[slotId]:{teamA,teamB,winner:winner||"",isUpset}};
-  await setDoc(doc(db,"meta","results"),{...results,ko:updated});
-  showAdminMsg(`Saved: ${slotId} → ${winner||"teams set"}${isUpset?" ⚡ upset":""}`);
+  const cur={...(results.ko||{})};
+  cur[slotId]={teamA,teamB,winner:winner||"",isUpset};
+
+  // Auto-propagate this winner into whichever next-round slot it feeds
+  for(const [targetId,feeders] of Object.entries(KO_ADVANCE)){
+    if(feeders.includes(slotId)){
+      const advanced=getAdvancedTeams(targetId,cur);
+      const existing=cur[targetId]||{};
+      cur[targetId]={...existing,teamA:advanced.teamA,teamB:advanced.teamB};
+    }
+  }
+
+  await setDoc(doc(db,"meta","results"),{...results,ko:cur});
+  showAdminMsg(`Saved: ${slotId} → ${winner||"teams set"}${isUpset?" ⚡ upset":""}${winner?" · advanced to next round":""}`);
   renderAdminKo();
 };
 
