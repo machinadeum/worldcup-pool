@@ -455,10 +455,22 @@ const GROUP_GAMES = [
 ];
 
 const KO_SLOTS = [
-  {id:"R32_1",round:"R32",pts:1},{id:"R32_2",round:"R32",pts:1},{id:"R32_3",round:"R32",pts:1},{id:"R32_4",round:"R32",pts:1},
-  {id:"R32_5",round:"R32",pts:1},{id:"R32_6",round:"R32",pts:1},{id:"R32_7",round:"R32",pts:1},{id:"R32_8",round:"R32",pts:1},
-  {id:"R32_9",round:"R32",pts:1},{id:"R32_10",round:"R32",pts:1},{id:"R32_11",round:"R32",pts:1},{id:"R32_12",round:"R32",pts:1},
-  {id:"R32_13",round:"R32",pts:1},{id:"R32_14",round:"R32",pts:1},{id:"R32_15",round:"R32",pts:1},{id:"R32_16",round:"R32",pts:1},
+  {id:"R32_1",round:"R32",pts:1,teamA:"Germany",teamB:"Paraguay",date:"Jun 29"},
+  {id:"R32_2",round:"R32",pts:1,teamA:"Brazil",teamB:"Japan",date:"Jun 29"},
+  {id:"R32_3",round:"R32",pts:1,teamA:"France",teamB:"Sweden",date:"Jun 30"},
+  {id:"R32_4",round:"R32",pts:1,teamA:"Ivory Coast",teamB:"Norway",date:"Jun 30"},
+  {id:"R32_5",round:"R32",pts:1,teamA:"South Korea",teamB:"Canada",date:"Jun 28"},
+  {id:"R32_6",round:"R32",pts:1,teamA:"Mexico",teamB:"Scotland",date:"Jun 30"},
+  {id:"R32_7",round:"R32",pts:1,teamA:"Netherlands",teamB:"Morocco",date:"Jun 29"},
+  {id:"R32_8",round:"R32",pts:1,teamA:"England",teamB:"Uruguay",date:"Jul 1"},
+  {id:"R32_9",round:"R32",pts:1,teamA:"Colombia",teamB:"Ghana",date:"Jul 2"},
+  {id:"R32_10",round:"R32",pts:1,teamA:"Argentina",teamB:"Cape Verde",date:"Jul 3"},
+  {id:"R32_11",round:"R32",pts:1,teamA:"Spain",teamB:"Algeria",date:"Jul 2"},
+  {id:"R32_12",round:"R32",pts:1,teamA:"Australia",teamB:"Iran",date:"Jul 3"},
+  {id:"R32_13",round:"R32",pts:1,teamA:"USA",teamB:"Bosnia and Herzegovina",date:"Jul 1"},
+  {id:"R32_14",round:"R32",pts:1,teamA:"Switzerland",teamB:"Belgium",date:"Jul 2"},
+  {id:"R32_15",round:"R32",pts:1,teamA:"Egypt",teamB:"Czechia",date:"Jul 1"},
+  {id:"R32_16",round:"R32",pts:1,teamA:"Portugal",teamB:"Croatia",date:"Jul 3"},
   {id:"R16_1",round:"R16",pts:2},{id:"R16_2",round:"R16",pts:2},{id:"R16_3",round:"R16",pts:2},{id:"R16_4",round:"R16",pts:2},
   {id:"R16_5",round:"R16",pts:2},{id:"R16_6",round:"R16",pts:2},{id:"R16_7",round:"R16",pts:2},{id:"R16_8",round:"R16",pts:2},
   {id:"QF_1",round:"QF",pts:4},{id:"QF_2",round:"QF",pts:4},{id:"QF_3",round:"QF",pts:4},{id:"QF_4",round:"QF",pts:4},
@@ -466,6 +478,7 @@ const KO_SLOTS = [
   {id:"F_1",round:"F",pts:12},
 ];
 const KO_LABELS = {R32:"Round of 32",R16:"Round of 16",QF:"Quarterfinals",SF:"Semifinals",F:"Final"};
+
 
 const AVATAR_COLORS=["#1a3a2a","#2a1a3a","#3a2a1a","#1a2a3a","#3a1a2a","#1a3a3a"];
 const AVATAR_TEXT  =["#00C853","#a78bfa","#FFD600","#38bdf8","#f472b6","#34d399"];
@@ -719,21 +732,25 @@ function renderKoPicks(){
   container.innerHTML=rounds.map(rnd=>{
     const slots=KO_SLOTS.filter(s=>s.round===rnd);
     return `<div class="group-header">${KO_LABELS[rnd]} · ${slots[0].pts} pts</div>${slots.map(s=>{
-      const r=results.ko?.[s.id]; const pick=player.koPicks?.[s.id];
-      const tA=r?.teamA||"TBD"; const tB=r?.teamB||"TBD";
+      const r=results.ko?.[s.id];
+      const pick=player.koPicks?.[s.id];
+      // Fall back to the slot's built-in bracket teams if admin hasn't overridden them
+      const tA=r?.teamA||s.teamA||"TBD";
+      const tB=r?.teamB||s.teamB||"TBD";
       const correct=r&&pick===r.winner;
+      const dateLabel=s.date?s.date+" · "+s.id:s.id;
       if(r?.winner) return `<div class="game-row">
-        <div class="game-date">${s.id}</div>
+        <div class="game-date">${dateLabel}</div>
         <div class="game-matchup">${tA} vs ${tB}<small>${r.winner} wins${r.isUpset?' <span class="badge badge-gold">UPSET</span>':''}</small></div>
         <div class="${correct?"result-correct":"result-wrong"}">${pick?(correct?"✓ +"+(s.pts+(r.isUpset?1:0))+"pts":"✗ 0pts"):"—"}</div>
       </div>`;
-      if(!r?.teamA||locked) return `<div class="game-row">
-        <div class="game-date">${s.id}</div>
+      if(tA==="TBD"||tB==="TBD"||locked) return `<div class="game-row">
+        <div class="game-date">${dateLabel}</div>
         <div class="game-matchup">${tA} vs ${tB}</div>
         <div class="text-muted text-sm">${pick||"—"}</div>
       </div>`;
       return `<div class="game-row">
-        <div class="game-date">${s.id}</div>
+        <div class="game-date">${dateLabel}</div>
         <div class="game-matchup">${tA} vs ${tB}</div>
         <div class="pick-group">
           ${pickBtn(tA,pick,s.id,true)}
@@ -1025,7 +1042,7 @@ function renderAdminPickKo(){
     <div class="group-header" style="margin-top:8px">${KO_LABELS[rnd]}</div>
     ${KO_SLOTS.filter(s=>s.round===rnd).map(s=>{
       const r=results.ko?.[s.id]; const pick=p.koPicks?.[s.id];
-      const tA=r?.teamA||""; const tB=r?.teamB||"";
+      const tA=r?.teamA||s.teamA||""; const tB=r?.teamB||s.teamB||"";
       if(!tA&&!tB) return `<div style="padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3)">${s.id} — teams TBD</div>`;
       return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
         <span class="text-mono" style="color:var(--text3);font-size:11px;width:44px">${s.id}</span>
@@ -1115,17 +1132,20 @@ function renderAdminKo(){
     <div class="group-header" style="margin-top:8px">${KO_LABELS[rnd]}</div>
     ${KO_SLOTS.filter(s=>s.round===rnd).map(s=>{
       const r=results.ko?.[s.id]||{};
+      const tA=r.teamA||s.teamA||"";
+      const tB=r.teamB||s.teamB||"";
+      const dateLabel=s.date?` · ${s.date}`:"";
       return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
-        <div style="display:flex;gap:8px;margin-bottom:6px">
-          <span class="text-mono" style="color:var(--text3);font-size:11px;padding-top:8px;width:44px">${s.id}</span>
-          <input type="text" placeholder="Team A" value="${r.teamA||""}" id="teamA-${s.id}" style="flex:1;font-size:12px;padding:7px 10px">
-          <input type="text" placeholder="Team B" value="${r.teamB||""}" id="teamB-${s.id}" style="flex:1;font-size:12px;padding:7px 10px">
+        <div style="display:flex;gap:8px;margin-bottom:6px;align-items:center">
+          <span class="text-mono" style="color:var(--text3);font-size:11px;width:90px">${s.id}${dateLabel}</span>
+          <input type="text" placeholder="Team A" value="${tA}" id="teamA-${s.id}" style="flex:1;font-size:12px;padding:7px 10px">
+          <input type="text" placeholder="Team B" value="${tB}" id="teamB-${s.id}" style="flex:1;font-size:12px;padding:7px 10px">
         </div>
-        <div style="display:flex;align-items:center;gap:8px;padding-left:52px">
+        <div style="display:flex;align-items:center;gap:8px;padding-left:98px">
           <select class="result-select" id="kores-${s.id}" style="flex:1">
             <option value="">— winner —</option>
-            ${r.teamA?`<option value="${r.teamA}" ${r.winner===r.teamA?"selected":""}>${r.teamA}</option>`:""}
-            ${r.teamB?`<option value="${r.teamB}" ${r.winner===r.teamB?"selected":""}>${r.teamB}</option>`:""}
+            ${tA?`<option value="${tA}" ${r.winner===tA?"selected":""}>${tA}</option>`:""}
+            ${tB?`<option value="${tB}" ${r.winner===tB?"selected":""}>${tB}</option>`:""}
           </select>
           <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--gold);cursor:pointer;white-space:nowrap">
             <input type="checkbox" class="upset-check" id="koupsset-${s.id}" ${r.isUpset?"checked":""}> Upset
