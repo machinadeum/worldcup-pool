@@ -454,23 +454,44 @@ const GROUP_GAMES = [
   {id:"J6",g:"J",home:"Jordan",away:"Argentina",date:"Jun 27"},
 ];
 
+// NOTE: As of June 25, the group stage is not yet finished (final matchday is June 27).
+// Group winners/runners-up below are CONFIRMED for groups that have completed all 3 games.
+// The 8 "best third-place" slots are still mathematically open until June 27 — those
+// are marked TBD with the eligible group pool noted, and must be updated in the
+// admin panel (Admin > KO Results > Round of 32) once FIFA's official pairings post.
 const KO_SLOTS = [
-  {id:"R32_1",round:"R32",pts:1,teamA:"Germany",teamB:"Paraguay",date:"Jun 29"},
-  {id:"R32_2",round:"R32",pts:1,teamA:"Brazil",teamB:"Japan",date:"Jun 29"},
-  {id:"R32_3",round:"R32",pts:1,teamA:"France",teamB:"Sweden",date:"Jun 30"},
-  {id:"R32_4",round:"R32",pts:1,teamA:"Ivory Coast",teamB:"Norway",date:"Jun 30"},
-  {id:"R32_5",round:"R32",pts:1,teamA:"South Korea",teamB:"Canada",date:"Jun 28"},
-  {id:"R32_6",round:"R32",pts:1,teamA:"Mexico",teamB:"Scotland",date:"Jun 30"},
-  {id:"R32_7",round:"R32",pts:1,teamA:"Netherlands",teamB:"Morocco",date:"Jun 29"},
-  {id:"R32_8",round:"R32",pts:1,teamA:"England",teamB:"Uruguay",date:"Jul 1"},
-  {id:"R32_9",round:"R32",pts:1,teamA:"Colombia",teamB:"Ghana",date:"Jul 2"},
-  {id:"R32_10",round:"R32",pts:1,teamA:"Argentina",teamB:"Cape Verde",date:"Jul 3"},
-  {id:"R32_11",round:"R32",pts:1,teamA:"Spain",teamB:"Algeria",date:"Jul 2"},
-  {id:"R32_12",round:"R32",pts:1,teamA:"Australia",teamB:"Iran",date:"Jul 3"},
-  {id:"R32_13",round:"R32",pts:1,teamA:"USA",teamB:"Bosnia and Herzegovina",date:"Jul 1"},
-  {id:"R32_14",round:"R32",pts:1,teamA:"Switzerland",teamB:"Belgium",date:"Jul 2"},
-  {id:"R32_15",round:"R32",pts:1,teamA:"Egypt",teamB:"Czechia",date:"Jul 1"},
-  {id:"R32_16",round:"R32",pts:1,teamA:"Portugal",teamB:"Croatia",date:"Jul 3"},
+  // M73: South Africa (2A) vs Canada (2B) — CONFIRMED, per FIFA.com official bracket
+  {id:"R32_1",round:"R32",pts:1,teamA:"South Africa",teamB:"Canada",date:"Jun 28"},
+  // M74: Germany (1E) vs Best 3rd from {A,B,C,D,F}
+  {id:"R32_2",round:"R32",pts:1,teamA:"Germany",teamB:"Best 3rd (A/B/C/D/F)",date:"Jun 29"},
+  // M75: Netherlands (1F) vs Morocco (2C) — CONFIRMED
+  {id:"R32_3",round:"R32",pts:1,teamA:"Netherlands",teamB:"Morocco",date:"Jun 29"},
+  // M76: Brazil (1C) vs Japan (2F) — CONFIRMED
+  {id:"R32_4",round:"R32",pts:1,teamA:"Brazil",teamB:"Japan",date:"Jun 29"},
+  // M77: France (1I) vs Best 3rd from {C,D,F,G,H}
+  {id:"R32_5",round:"R32",pts:1,teamA:"France",teamB:"Best 3rd (C/D/F/G/H)",date:"Jun 30"},
+  // M78: Ivory Coast (2E) vs Norway (2I) — CONFIRMED
+  {id:"R32_6",round:"R32",pts:1,teamA:"Ivory Coast",teamB:"Norway",date:"Jun 30"},
+  // M79: Mexico (1A) vs Best 3rd from {C,E,F,H,I}
+  {id:"R32_7",round:"R32",pts:1,teamA:"Mexico",teamB:"Best 3rd (C/E/F/H/I)",date:"Jun 30"},
+  // M80: England (1L) vs Best 3rd from {E,H,I,J,K}
+  {id:"R32_8",round:"R32",pts:1,teamA:"England",teamB:"Best 3rd (E/H/I/J/K)",date:"Jul 1"},
+  // M81: USA (1D) vs Best 3rd from {B,E,F,I,J}
+  {id:"R32_9",round:"R32",pts:1,teamA:"USA",teamB:"Best 3rd (B/E/F/I/J)",date:"Jul 1"},
+  // M82: Egypt (1G) vs Best 3rd from {A,E,H,I,J}
+  {id:"R32_10",round:"R32",pts:1,teamA:"Egypt",teamB:"Best 3rd (A/E/H/I/J)",date:"Jul 1"},
+  // M83: Portugal (2K) vs Ghana (2L) — CONFIRMED
+  {id:"R32_11",round:"R32",pts:1,teamA:"Portugal",teamB:"Ghana",date:"Jul 2"},
+  // M84: Spain (1H) vs Austria (2J) — CONFIRMED
+  {id:"R32_12",round:"R32",pts:1,teamA:"Spain",teamB:"Austria",date:"Jul 2"},
+  // M85: Switzerland (1B) vs Best 3rd from {E,F,G,I,J}
+  {id:"R32_13",round:"R32",pts:1,teamA:"Switzerland",teamB:"Best 3rd (E/F/G/I/J)",date:"Jul 2"},
+  // M86: Argentina (1J) vs Uruguay (2H) — CONFIRMED
+  {id:"R32_14",round:"R32",pts:1,teamA:"Argentina",teamB:"Uruguay",date:"Jul 3"},
+  // M87: Colombia (1K) vs Best 3rd from {D,E,I,J,L}
+  {id:"R32_15",round:"R32",pts:1,teamA:"Colombia",teamB:"Best 3rd (D/E/I/J/L)",date:"Jul 3"},
+  // M88: Australia (2D) vs Iran (2G) — CONFIRMED
+  {id:"R32_16",round:"R32",pts:1,teamA:"Australia",teamB:"Iran",date:"Jul 3"},
   {id:"R16_1",round:"R16",pts:2},{id:"R16_2",round:"R16",pts:2},{id:"R16_3",round:"R16",pts:2},{id:"R16_4",round:"R16",pts:2},
   {id:"R16_5",round:"R16",pts:2},{id:"R16_6",round:"R16",pts:2},{id:"R16_7",round:"R16",pts:2},{id:"R16_8",round:"R16",pts:2},
   {id:"QF_1",round:"QF",pts:4},{id:"QF_2",round:"QF",pts:4},{id:"QF_3",round:"QF",pts:4},{id:"QF_4",round:"QF",pts:4},
@@ -481,6 +502,10 @@ const KO_LABELS = {R32:"Round of 32",R16:"Round of 16",QF:"Quarterfinals",SF:"Se
 
 // Bracket advancement: which two prior-round slots feed into each next-round slot.
 // Winner of slot[0] becomes teamA, winner of slot[1] becomes teamB, in the target slot.
+// NOTE: this governs PLAYER PICK cascading only (each player's own bracket projection).
+// It does NOT need to match ESPN's exact pairing numbers, since real R16+ matchups
+// are entered manually by the admin once actual results are known — this mapping
+// only determines what a player sees as "their" hypothetical next-round matchup.
 const KO_ADVANCE = {
   "R16_1":["R32_1","R32_2"], "R16_2":["R32_3","R32_4"],
   "R16_3":["R32_5","R32_6"], "R16_4":["R32_7","R32_8"],
@@ -804,10 +829,10 @@ function renderKoPicks(){
         <div class="game-matchup">${r.teamA||tA} vs ${r.teamB||tB}<small>${r.winner} wins${r.isUpset?' <span class="badge badge-gold">UPSET</span>':''}</small></div>
         <div class="${correct?"result-correct":"result-wrong"}">${pick?(correct?"✓ +"+(s.pts+(r.isUpset?1:0))+"pts":"✗ 0pts"):"—"}</div>
       </div>`;
-      if(tA==="TBD"||tB==="TBD") return `<div class="game-row">
+      if(tA==="TBD"||tB==="TBD"||tA.startsWith("Best 3rd")||tB.startsWith("Best 3rd")) return `<div class="game-row">
         <div class="game-date">${dateLabel}</div>
-        <div class="game-matchup">${tA} vs ${tB}</div>
-        <div class="text-muted text-sm">Pick earlier rounds first</div>
+        <div class="game-matchup">${tA} vs ${tB}<small style="color:var(--gold)">Pending final group results (Jun 27)</small></div>
+        <div class="text-muted text-sm">Locked for now</div>
       </div>`;
       if(locked) return `<div class="game-row">
         <div class="game-date">${dateLabel}</div>
