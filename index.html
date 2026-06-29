@@ -550,6 +550,22 @@ const KO_ADVANCE = {
   "M104":["M101","M102"],
 };
 
+// Returns true if `team` has been knocked out of the real tournament — i.e. they
+// played in some KO match that already has a real result, and they did NOT win it.
+// Used so a player's hypothetical pick of an eliminated team in a LATER round
+// shows as wrong immediately, rather than sitting in limbo until that later
+// round's (impossible) result is entered.
+function isTeamEliminated(team){
+  if(!team) return false;
+  for(const s of KO_SLOTS){
+    const r=results.ko?.[s.id];
+    if(!r?.winner) continue;
+    const played=r.teamA===team||r.teamB===team;
+    if(played && r.winner!==team) return true;
+  }
+  return false;
+}
+
 // Given current results.ko, return {teamA, teamB} for a slot by pulling winners
 // from its feeder slots (falls back to admin-entered/hardcoded teamA/teamB if no feeders apply)
 function getAdvancedTeams(slotId, resultsKo){
@@ -878,9 +894,11 @@ function renderKoPicks(){
         <div class="game-matchup">${matchBadge}${tA} vs ${tB}</div>
         <div class="text-muted text-sm">${pick||"—"}</div>
       </div>`;
+      const eliminatedNote=(isTeamEliminated(tA)||isTeamEliminated(tB))
+        ?`<small style="color:var(--red)">One of these teams has already been eliminated — update your pick</small>`:"";
       return `<div class="game-row">
         <div class="game-date">${s.date}</div>
-        <div class="game-matchup">${matchBadge}${tA} vs ${tB}</div>
+        <div class="game-matchup">${matchBadge}${tA} vs ${tB}${eliminatedNote}</div>
         <div class="pick-group">
           ${pickBtn(tA,pick,s.id,true)}
           ${pickBtn(tB,pick,s.id,true)}
@@ -1107,8 +1125,13 @@ window.renderKoGridView=function(){
         const pick=p.koPicks?.[s.id];
         if(!pick) return `<td class="grid-cell empty">—</td>`;
         const hasResult=!!r?.winner;
-        const correct=hasResult&&pick===r.winner;
-        const cellClass=hasResult?(correct?"correct":"wrong"):"";
+        let cellClass="";
+        if(hasResult){
+          cellClass=pick===r.winner?"correct":"wrong";
+        } else if(isTeamEliminated(pick)){
+          // Picked team already lost an earlier real match — this later pick can't come true
+          cellClass="wrong";
+        }
         const t=tf(pick);
         const pillContent=flagImg(t.iso2)+`<span class="code">${t.code}</span>`;
         return `<td class="grid-cell ${cellClass}"><span class="pick-pill">${pillContent}</span></td>`;
@@ -1179,7 +1202,10 @@ window.renderBracketView=function(){
       if(isPickedTeam&&isActualWinner) cls="correct";
       else if(isPickedTeam&&!isActualWinner) cls="wrong";
     } else if(isPickedTeam){
-      cls="picked-winner";
+      // This specific match hasn't been played yet, but if the team was already
+      // knocked out in an earlier real match, the pick can't come true — show wrong
+      // instead of leaving it in pending limbo.
+      cls=isTeamEliminated(team)?"wrong":"picked-winner";
     }
     const t=tf(team);
     return `<div class="bracket-slot ${cls}">${flagImg(t.iso2)}<span class="bs-code">${t.code}</span></div>`;
