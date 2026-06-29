@@ -224,6 +224,7 @@
     <button class="tab-btn active" onclick="switchLbTab('standings',this)">Standings</button>
     <button class="tab-btn" onclick="switchLbTab('picksheets',this)">Pick Sheets</button>
     <button class="tab-btn" onclick="switchLbTab('grid',this)">Grid View</button>
+    <button class="tab-btn" onclick="switchLbTab('kogrid',this)">KO Grid</button>
     <button class="tab-btn" onclick="switchLbTab('brackets',this)">Brackets</button>
   </div>
   <div id="lb-tab-standings">
@@ -242,6 +243,16 @@
   <div id="lb-tab-grid" style="display:none">
     <div id="grid-hidden-notice" class="locked-bar">🔒 The grid will be visible once the admin opens picks after kickoff on June 11</div>
     <div id="grid-container"></div>
+  </div>
+  <div id="lb-tab-kogrid" style="display:none">
+    <div id="kogrid-hidden-notice" class="locked-bar">🔒 The KO grid will be visible once the admin opens picks after kickoff on June 11</div>
+    <div id="kogrid-content" style="display:none">
+      <div class="card" style="margin-bottom:16px">
+        <div class="label" style="margin-bottom:6px">Show matches on</div>
+        <select class="result-select" id="kogrid-date-select" style="width:100%;padding:10px 14px;font-size:14px" onchange="renderKoGridView()"></select>
+      </div>
+      <div id="kogrid-container"></div>
+    </div>
   </div>
   <div id="lb-tab-brackets" style="display:none">
     <div id="brackets-hidden-notice" class="locked-bar">🔒 Brackets will be visible once the admin opens picks after kickoff on June 11</div>
@@ -622,11 +633,13 @@ window.switchLbTab=function(tab,btn){
   document.getElementById("lb-tab-standings").style.display=tab==="standings"?"block":"none";
   document.getElementById("lb-tab-picksheets").style.display=tab==="picksheets"?"block":"none";
   document.getElementById("lb-tab-grid").style.display=tab==="grid"?"block":"none";
+  document.getElementById("lb-tab-kogrid").style.display=tab==="kogrid"?"block":"none";
   document.getElementById("lb-tab-brackets").style.display=tab==="brackets"?"block":"none";
   document.querySelectorAll("#page-leaderboard .tab-btn").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
   if(tab==="picksheets") renderPickSheets();
   if(tab==="grid") renderGridView();
+  if(tab==="kogrid") renderKoGridTab();
   if(tab==="brackets") renderBracketsTab();
 };
 window.switchAdminTab=function(tab,btn){
@@ -698,6 +711,7 @@ function refreshAll(){
   if(document.getElementById("page-picks").classList.contains("active")) renderPicks();
   if(document.getElementById("page-leaderboard").classList.contains("active")) renderLeaderboard();
   if(document.getElementById("lb-tab-grid").style.display==="block") renderGridView();
+  if(document.getElementById("lb-tab-kogrid").style.display==="block") renderKoGridTab();
   if(document.getElementById("lb-tab-brackets").style.display==="block") renderBracketsTab();
   if(adminAuthed&&document.getElementById("page-admin").classList.contains("active")) renderAdmin();
 }
@@ -1038,6 +1052,77 @@ function renderGridView(){
       <span><span class="dot" style="background:var(--surface2)"></span>Result pending</span>
     </div>`;
 }
+
+// ── KO Grid: which player picked which team, per KO match, filterable by date ──
+function renderKoGridTab(){
+  document.getElementById("kogrid-hidden-notice").style.display=picksVisible?"none":"block";
+  document.getElementById("kogrid-content").style.display=picksVisible?"block":"none";
+  if(!picksVisible) return;
+
+  // Populate date dropdown without losing current selection
+  const sel=document.getElementById("kogrid-date-select");
+  const curVal=sel.value;
+  const dates=[...new Set(KO_SLOTS.map(s=>s.date))]; // already chronological since KO_SLOTS is built in order
+  sel.innerHTML=`<option value="all">All dates</option>`+
+    dates.map(d=>`<option value="${d}" ${d===curVal?"selected":""}>${d}</option>`).join("");
+  if(curVal) sel.value=curVal; else sel.value="all";
+
+  renderKoGridView();
+}
+
+window.renderKoGridView=function(){
+  const container=document.getElementById("kogrid-container");
+  const selDate=document.getElementById("kogrid-date-select").value;
+  if(!allPlayers.length){container.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)">No participants yet</div>`;return;}
+
+  const players=[...allPlayers].sort((a,b)=>a.name.localeCompare(b.name));
+  const slots=KO_SLOTS.filter(s=>selDate==="all"||s.date===selDate);
+
+  if(!slots.length){container.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)">No matches on this date</div>`;return;}
+
+  // Group by date for row sectioning (only meaningful when "All dates" selected)
+  const byDate={};
+  slots.forEach(s=>{if(!byDate[s.date])byDate[s.date]=[];byDate[s.date].push(s);});
+  const dates=[...new Set(slots.map(s=>s.date))];
+
+  let rows="";
+  dates.forEach(date=>{
+    if(selDate==="all"){
+      rows+=`<tr><td class="grid-date-header">${date}</td>`+players.map(()=>`<td style="background:var(--surface3)"></td>`).join("")+`</tr>`;
+    }
+    byDate[date].forEach(s=>{
+      const r=results.ko?.[s.id];
+      rows+=`<tr><td class="grid-game-label"><span class="gid">${s.id}</span>${KO_LABELS[s.round]}</td>`;
+      rows+=players.map(p=>{
+        const pick=p.koPicks?.[s.id];
+        if(!pick) return `<td class="grid-cell empty">—</td>`;
+        const hasResult=!!r?.winner;
+        const correct=hasResult&&pick===r.winner;
+        const cellClass=hasResult?(correct?"correct":"wrong"):"";
+        const t=tf(pick);
+        const pillContent=flagImg(t.iso2)+`<span class="code">${t.code}</span>`;
+        return `<td class="grid-cell ${cellClass}"><span class="pick-pill">${pillContent}</span></td>`;
+      }).join("");
+      rows+=`</tr>`;
+    });
+  });
+
+  const header=`<tr><th class="grid-corner">Match</th>`+
+    players.map(p=>`<th class="grid-player-th">${p.name}</th>`).join("")+`</tr>`;
+
+  container.innerHTML=`
+    <div class="grid-scroll">
+      <table class="grid-table">
+        <thead>${header}</thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="grid-legend">
+      <span><span class="dot" style="background:rgba(0,200,83,.35)"></span>Correct pick</span>
+      <span><span class="dot" style="background:rgba(255,61,61,.25)"></span>Incorrect pick</span>
+      <span><span class="dot" style="background:var(--surface2)"></span>Result pending</span>
+    </div>`;
+};
 
 // ── Brackets tab: visual bracket tree for a selected player ───
 function renderBracketsTab(){
