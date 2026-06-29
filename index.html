@@ -88,6 +88,22 @@
   .grid-table .grid-cell.empty{color:var(--text3);font-size:11px;}
   .grid-legend{display:flex;gap:16px;align-items:center;margin-top:10px;font-size:11px;color:var(--text2);}
   .grid-legend .dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle;}
+  /* Bracket tree */
+  .bracket-scroll{overflow-x:auto;padding-bottom:8px;}
+  .bracket-tree{display:flex;gap:28px;min-width:max-content;padding:8px 4px;}
+  .bracket-round{display:flex;flex-direction:column;justify-content:center;gap:14px;min-width:168px;}
+  .bracket-round-label{font-family:var(--font-m);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;text-align:center;margin-bottom:6px;}
+  .bracket-match{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+  .bracket-match .bm-id{font-family:var(--font-m);font-size:9px;color:var(--text3);padding:3px 8px;background:var(--surface2);border-bottom:1px solid var(--border);}
+  .bracket-slot{display:flex;align-items:center;gap:6px;padding:6px 8px;font-size:12px;border-bottom:1px solid var(--border);}
+  .bracket-slot:last-of-type{border-bottom:none;}
+  .bracket-slot.tbd{color:var(--text3);font-style:italic;}
+  .bracket-slot.picked-winner{background:rgba(0,200,83,.10);}
+  .bracket-slot.correct{background:rgba(0,200,83,.18);color:var(--green);font-weight:500;}
+  .bracket-slot.wrong{background:rgba(255,61,61,.10);color:var(--red);}
+  .bracket-slot img{width:16px;height:11px;border-radius:1px;flex-shrink:0;}
+  .bracket-slot .bs-code{font-family:var(--font-m);font-size:11px;font-weight:500;}
+  .bracket-final-wrap{display:flex;flex-direction:column;justify-content:center;}
   /* Admin */
   .result-select{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--font-b);font-size:12px;padding:6px 8px;outline:none;cursor:pointer;}
   .result-select:focus{border-color:var(--green);}
@@ -208,6 +224,7 @@
     <button class="tab-btn active" onclick="switchLbTab('standings',this)">Standings</button>
     <button class="tab-btn" onclick="switchLbTab('picksheets',this)">Pick Sheets</button>
     <button class="tab-btn" onclick="switchLbTab('grid',this)">Grid View</button>
+    <button class="tab-btn" onclick="switchLbTab('brackets',this)">Brackets</button>
   </div>
   <div id="lb-tab-standings">
     <div class="card" style="padding:0;overflow:hidden">
@@ -225,6 +242,16 @@
   <div id="lb-tab-grid" style="display:none">
     <div id="grid-hidden-notice" class="locked-bar">🔒 The grid will be visible once the admin opens picks after kickoff on June 11</div>
     <div id="grid-container"></div>
+  </div>
+  <div id="lb-tab-brackets" style="display:none">
+    <div id="brackets-hidden-notice" class="locked-bar">🔒 Brackets will be visible once the admin opens picks after kickoff on June 11</div>
+    <div id="brackets-content" style="display:none">
+      <div class="card" style="margin-bottom:16px">
+        <div class="label" style="margin-bottom:6px">View bracket for</div>
+        <select class="result-select" id="bracket-player-select" style="width:100%;padding:10px 14px;font-size:14px" onchange="renderBracketView()"></select>
+      </div>
+      <div id="bracket-tree-container"></div>
+    </div>
   </div>
 </div>
 
@@ -595,10 +622,12 @@ window.switchLbTab=function(tab,btn){
   document.getElementById("lb-tab-standings").style.display=tab==="standings"?"block":"none";
   document.getElementById("lb-tab-picksheets").style.display=tab==="picksheets"?"block":"none";
   document.getElementById("lb-tab-grid").style.display=tab==="grid"?"block":"none";
+  document.getElementById("lb-tab-brackets").style.display=tab==="brackets"?"block":"none";
   document.querySelectorAll("#page-leaderboard .tab-btn").forEach(b=>b.classList.remove("active"));
   btn.classList.add("active");
   if(tab==="picksheets") renderPickSheets();
   if(tab==="grid") renderGridView();
+  if(tab==="brackets") renderBracketsTab();
 };
 window.switchAdminTab=function(tab,btn){
   document.querySelectorAll("#admin-tab-group,#admin-tab-ko,#admin-tab-players,#admin-tab-settings")
@@ -669,6 +698,7 @@ function refreshAll(){
   if(document.getElementById("page-picks").classList.contains("active")) renderPicks();
   if(document.getElementById("page-leaderboard").classList.contains("active")) renderLeaderboard();
   if(document.getElementById("lb-tab-grid").style.display==="block") renderGridView();
+  if(document.getElementById("lb-tab-brackets").style.display==="block") renderBracketsTab();
   if(adminAuthed&&document.getElementById("page-admin").classList.contains("active")) renderAdmin();
 }
 
@@ -1008,6 +1038,99 @@ function renderGridView(){
       <span><span class="dot" style="background:var(--surface2)"></span>Result pending</span>
     </div>`;
 }
+
+// ── Brackets tab: visual bracket tree for a selected player ───
+function renderBracketsTab(){
+  document.getElementById("brackets-hidden-notice").style.display=picksVisible?"none":"block";
+  document.getElementById("brackets-content").style.display=picksVisible?"block":"none";
+  if(!picksVisible) return;
+
+  // Populate / refresh player dropdown without losing current selection
+  const sel=document.getElementById("bracket-player-select");
+  const curVal=sel.value;
+  const players=[...allPlayers].sort((a,b)=>a.name.localeCompare(b.name));
+  sel.innerHTML=players.map(p=>`<option value="${p.id}" ${p.id===curVal?"selected":""}>${p.name}</option>`).join("");
+  if(!curVal && players.length) sel.value=players[0].id;
+
+  renderBracketView();
+}
+
+window.renderBracketView=function(){
+  const container=document.getElementById("bracket-tree-container");
+  const sel=document.getElementById("bracket-player-select");
+  const playerId=sel.value;
+  const player=allPlayers.find(p=>p.id===playerId);
+  if(!player){container.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)">No participants yet</div>`;return;}
+
+  // Render one "slot" (half of a match card) for a given matchup + team
+  function slotHtml(slotId,team,pick){
+    if(!team) return `<div class="bracket-slot tbd">TBD</div>`;
+    const r=results.ko?.[slotId];
+    const isPickedTeam=pick===team;
+    const hasResult=!!r?.winner;
+    let cls="";
+    if(hasResult){
+      const isActualWinner=r.winner===team;
+      if(isPickedTeam&&isActualWinner) cls="correct";
+      else if(isPickedTeam&&!isActualWinner) cls="wrong";
+    } else if(isPickedTeam){
+      cls="picked-winner";
+    }
+    const t=tf(team);
+    return `<div class="bracket-slot ${cls}">${flagImg(t.iso2)}<span class="bs-code">${t.code}</span></div>`;
+  }
+
+  function matchCard(slotId){
+    const s=KO_SLOTS.find(x=>x.id===slotId);
+    const bracketTeams=getPlayerBracketTeams(slotId,player);
+    const pick=player.koPicks?.[slotId];
+    return `<div class="bracket-match">
+      <div class="bm-id">${slotId} · ${s?.date||""}</div>
+      ${slotHtml(slotId,bracketTeams.teamA,pick)}
+      ${slotHtml(slotId,bracketTeams.teamB,pick)}
+    </div>`;
+  }
+
+  // Build each round's column. Order within column follows bracket tree order
+  // (top-half matches first, matching KO_ADVANCE pairing structure).
+  const r32Order=["M73","M74","M75","M76","M77","M78","M79","M80","M81","M82","M83","M84","M85","M86","M87","M88"];
+  const r16Order=["M89","M90","M91","M92","M93","M94","M95","M96"];
+  const qfOrder=["M97","M98","M99","M100"];
+  const sfOrder=["M101","M102"];
+
+  const treeHtml=`
+    <div class="bracket-scroll">
+      <div class="bracket-tree">
+        <div class="bracket-round">
+          <div class="bracket-round-label">Round of 32</div>
+          ${r32Order.map(matchCard).join("")}
+        </div>
+        <div class="bracket-round">
+          <div class="bracket-round-label">Round of 16</div>
+          ${r16Order.map(matchCard).join("")}
+        </div>
+        <div class="bracket-round">
+          <div class="bracket-round-label">Quarterfinals</div>
+          ${qfOrder.map(matchCard).join("")}
+        </div>
+        <div class="bracket-round">
+          <div class="bracket-round-label">Semifinals</div>
+          ${sfOrder.map(matchCard).join("")}
+        </div>
+        <div class="bracket-round bracket-final-wrap">
+          <div class="bracket-round-label">Final</div>
+          ${matchCard("M104")}
+        </div>
+      </div>
+    </div>
+    <div class="grid-legend">
+      <span><span class="dot" style="background:rgba(0,200,83,.35)"></span>Pick correct</span>
+      <span><span class="dot" style="background:rgba(255,61,61,.18)"></span>Pick wrong</span>
+      <span><span class="dot" style="background:rgba(0,200,83,.10)"></span>Picked, result pending</span>
+      <span><span class="dot" style="background:var(--surface)"></span>TBD</span>
+    </div>`;
+  container.innerHTML=treeHtml;
+};
 
 // ── Admin ─────────────────────────────────────────────────────
 window.adminLogin=function(){
