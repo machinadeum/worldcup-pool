@@ -1075,7 +1075,17 @@ window.renderKoGridView=function(){
   const selDate=document.getElementById("kogrid-date-select").value;
   if(!allPlayers.length){container.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)">No participants yet</div>`;return;}
 
-  const players=[...allPlayers].sort((a,b)=>a.name.localeCompare(b.name));
+  // Order: signed-in player's own column first, then everyone else by
+  // current standings (highest total points first) — matches the Brackets tab ordering.
+  const scored=allPlayers.map(p=>({...p,total:calcPoints(p).total}));
+  scored.sort((a,b)=>{
+    if(currentPlayer){
+      if(a.id===currentPlayer.id) return -1;
+      if(b.id===currentPlayer.id) return 1;
+    }
+    return b.total-a.total;
+  });
+  const players=scored;
   const slots=KO_SLOTS.filter(s=>selDate==="all"||s.date===selDate);
 
   if(!slots.length){container.innerHTML=`<div style="padding:40px;text-align:center;color:var(--text3)">No matches on this date</div>`;return;}
@@ -1108,7 +1118,7 @@ window.renderKoGridView=function(){
   });
 
   const header=`<tr><th class="grid-corner">Match</th>`+
-    players.map(p=>`<th class="grid-player-th">${p.name}</th>`).join("")+`</tr>`;
+    players.map(p=>`<th class="grid-player-th">${p.name}${currentPlayer?.id===p.id?" (you)":""}</th>`).join("")+`</tr>`;
 
   container.innerHTML=`
     <div class="grid-scroll">
