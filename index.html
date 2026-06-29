@@ -1045,12 +1045,22 @@ function renderBracketsTab(){
   document.getElementById("brackets-content").style.display=picksVisible?"block":"none";
   if(!picksVisible) return;
 
-  // Populate / refresh player dropdown without losing current selection
+  // Populate / refresh player dropdown without losing current selection.
+  // Order: signed-in player first (so they can review their own bracket
+  // immediately), then everyone else sorted by current standings (highest
+  // total points first). If nobody is signed in, order is purely by standings.
   const sel=document.getElementById("bracket-player-select");
   const curVal=sel.value;
-  const players=[...allPlayers].sort((a,b)=>a.name.localeCompare(b.name));
-  sel.innerHTML=players.map(p=>`<option value="${p.id}" ${p.id===curVal?"selected":""}>${p.name}</option>`).join("");
-  if(!curVal && players.length) sel.value=players[0].id;
+  const scored=allPlayers.map(p=>({...p,total:calcPoints(p).total}));
+  scored.sort((a,b)=>{
+    if(currentPlayer){
+      if(a.id===currentPlayer.id) return -1;
+      if(b.id===currentPlayer.id) return 1;
+    }
+    return b.total-a.total;
+  });
+  sel.innerHTML=scored.map(p=>`<option value="${p.id}" ${p.id===curVal?"selected":""}>${p.name}${currentPlayer?.id===p.id?" (you)":""}</option>`).join("");
+  if(!curVal && scored.length) sel.value=scored[0].id;
 
   renderBracketView();
 }
